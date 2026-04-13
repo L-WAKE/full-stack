@@ -1,0 +1,7 @@
+interface:
+  display_name: "房源 AI 知识库开发"
+  short_description: "开发房源 AI 知识库与 RAG 项目"
+  default_prompt: "使用 $build-house-ai-kb 继续实现当前工作区中的房源 AI 知识库项目。"
+
+policy:
+  allow_implicit_invocation: true

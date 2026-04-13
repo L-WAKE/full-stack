@@ -1,0 +1,6 @@
+interface:
+  display_name: "房源管理系统开发"
+  short_description: "指导 AI 在当前工作区完成房源管理系统 MVP 的搭建与迭代开发"
+  default_prompt: "Use $house-management-system-builder，根据这个 skill 在当前工作区搭建并实现房源管理系统 MVP。"
+policy:
+  allow_implicit_invocation: true

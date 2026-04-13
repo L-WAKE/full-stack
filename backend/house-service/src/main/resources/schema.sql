@@ -1,0 +1,139 @@
+CREATE TABLE IF NOT EXISTS sys_user (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    org_id BIGINT DEFAULT 1,
+    username VARCHAR(64) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    display_name VARCHAR(64) NOT NULL,
+    mobile VARCHAR(32),
+    employee_code VARCHAR(64),
+    position VARCHAR(64),
+    status VARCHAR(32) NOT NULL DEFAULT 'ENABLED',
+    created_by BIGINT DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by BIGINT DEFAULT 1,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS sys_role (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    role_code VARCHAR(64) NOT NULL UNIQUE,
+    role_name VARCHAR(64) NOT NULL,
+    remark VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sys_user_role (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sys_menu (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    parent_id BIGINT DEFAULT 0,
+    menu_code VARCHAR(64) NOT NULL,
+    menu_name VARCHAR(64) NOT NULL,
+    menu_type VARCHAR(16) NOT NULL DEFAULT 'MENU',
+    path VARCHAR(128),
+    permission_code VARCHAR(64),
+    sort_no INT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS sys_role_menu (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    role_id BIGINT NOT NULL,
+    menu_id BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS landlord (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    org_id BIGINT DEFAULT 1,
+    name VARCHAR(64) NOT NULL,
+    mobile VARCHAR(32) NOT NULL,
+    id_no VARCHAR(64),
+    bank_account VARCHAR(64),
+    address VARCHAR(255),
+    remark VARCHAR(255),
+    created_by BIGINT DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by BIGINT DEFAULT 1,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS tenant (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    org_id BIGINT DEFAULT 1,
+    name VARCHAR(64) NOT NULL,
+    mobile VARCHAR(32) NOT NULL,
+    gender VARCHAR(16),
+    emergency_contact VARCHAR(64),
+    emergency_mobile VARCHAR(32),
+    house_name VARCHAR(128),
+    checkin_date VARCHAR(32),
+    checkout_date VARCHAR(32),
+    remark VARCHAR(255),
+    created_by BIGINT DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by BIGINT DEFAULT 1,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS house (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    org_id BIGINT DEFAULT 1,
+    house_code VARCHAR(64) NOT NULL UNIQUE,
+    house_name VARCHAR(128) NOT NULL,
+    rental_mode VARCHAR(32) NOT NULL,
+    project_name VARCHAR(128) NOT NULL,
+    community_name VARCHAR(128),
+    address VARCHAR(255) NOT NULL,
+    layout_desc VARCHAR(64),
+    area DECIMAL(10,2) NOT NULL,
+    rent_price DECIMAL(10,2) NOT NULL,
+    deposit_price DECIMAL(10,2) DEFAULT 0,
+    status VARCHAR(32) NOT NULL,
+    landlord_id BIGINT,
+    landlord_name VARCHAR(64),
+    tenant_name VARCHAR(64),
+    created_by BIGINT DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by BIGINT DEFAULT 1,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS maintenance_order (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    org_id BIGINT DEFAULT 1,
+    order_no VARCHAR(64) NOT NULL UNIQUE,
+    house_name VARCHAR(128) NOT NULL,
+    issue_type VARCHAR(64) NOT NULL,
+    reporter_name VARCHAR(64),
+    assignee_name VARCHAR(64),
+    priority VARCHAR(16) NOT NULL DEFAULT 'MEDIUM',
+    status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+    created_by BIGINT DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by BIGINT DEFAULT 1,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS cleaning_order (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    org_id BIGINT DEFAULT 1,
+    order_no VARCHAR(64) NOT NULL UNIQUE,
+    house_name VARCHAR(128) NOT NULL,
+    cleaning_type VARCHAR(64) NOT NULL,
+    appointment_time VARCHAR(32),
+    assignee_name VARCHAR(64),
+    status VARCHAR(32) NOT NULL DEFAULT 'PENDING_ASSIGN',
+    created_by BIGINT DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by BIGINT DEFAULT 1,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0
+);

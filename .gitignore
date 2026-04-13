@@ -1,0 +1,68 @@
+# IDE / editor
+.idea/
+**/.idea/
+.vscode/
+.history/
+*.iml
+
+# OS / misc
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+**/.venv/
+venv/
+**/venv/
+career-docs/.venv-skill-tools/
+
+# Node.js
+node_modules/
+**/node_modules/
+.npm-cache/
+**/.npm-cache/
+dist/
+**/dist/
+
+# Java / Maven
+target/
+**/target/
+*.class
+
+# Local env files
+**/.env
+!**/.env.example
+!backend/ai-kb-service/.env.postgres
+!backend/ai-kb-service/.env.sqlite
+
+# Logs
+*.log
+*.err.log
+logs/
+**/logs/
+
+# Local databases / runtime data
+*.db
+*.sqlite
+*.sqlite3
+!backend/ai-kb-service/.env.sqlite
+backend/ai-kb-service/storage/
+tools/mysql-data/
+tools/qdrant/
+
+# Local tooling artifacts
+tools/apache-maven-*/
+tools/*.zip
+tools/mysql-house.ini
+tools/mysql-manual-start.log
+
+# Temporary files
+temp-*.docx
