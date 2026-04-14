@@ -1,5 +1,6 @@
 <script setup>
 import {
+  ArrowRight,
   Briefcase,
   Expand,
   Files,
@@ -9,11 +10,13 @@ import {
   Notebook,
   Operation,
   Setting,
+  SwitchButton,
   User,
   UserFilled
 } from '@element-plus/icons-vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { routeTitleMap } from '../utils/locale'
 import { useUserStore } from '../stores/user'
 
 const route = useRoute()
@@ -41,8 +44,31 @@ const menuIconMap = {
 }
 
 const menus = computed(() => userStore.menus)
-const isDashboard = computed(() => route.path === '/dashboard')
-const sidebarToggleText = computed(() => (isSidebarCollapsed.value ? '展开侧栏' : '收起侧栏'))
+const currentTitle = computed(() => routeTitleMap[route.path] || '房源管理系统')
+const currentParentTitle = computed(() => {
+  const segments = route.path.split('/').filter(Boolean)
+  if (segments.length <= 1) {
+    return '经营后台'
+  }
+  const parentPath = `/${segments[0]}`
+  return routeTitleMap[parentPath] || '经营后台'
+})
+const headerDescription = computed(() => {
+  if (route.path.startsWith('/housing')) {
+    return '聚焦房源台账、出租状态、项目分布与租赁效率，帮助运营团队快速完成资产盘点。'
+  }
+  if (route.path.startsWith('/customer')) {
+    return '统一维护租客与房东信息，沉淀完整履约档案和沟通基础资料。'
+  }
+  if (route.path.startsWith('/workorder')) {
+    return '围绕维修与保洁任务建立流程闭环，让异常响应、派单和完结进度一目了然。'
+  }
+  if (route.path.startsWith('/system')) {
+    return '沉淀组织、角色、菜单和公告配置，确保运营权限边界清晰可控。'
+  }
+  return '围绕房源、客户、工单和系统配置构建统一经营后台，信息密度更高，操作路径更清晰。'
+})
+const sidebarToggleText = computed(() => (isSidebarCollapsed.value ? '展开导航' : '收起导航'))
 
 function resolveMenuIcon(path) {
   return menuIconMap[path] || Files
@@ -75,8 +101,14 @@ onMounted(async () => {
         <div class="brand-mark">HM</div>
         <div v-show="!isSidebarCollapsed" class="brand-copy">
           <div class="brand-title">房源管理系统</div>
-          <div class="brand-subtitle">租赁运营管理平台</div>
+          <div class="brand-subtitle">Rental Operation Console</div>
         </div>
+      </div>
+
+      <div v-show="!isSidebarCollapsed" class="sidebar-overview">
+        <div class="sidebar-overview__label">当前登录</div>
+        <div class="sidebar-overview__name">{{ userStore.profile?.displayName || '系统管理员' }}</div>
+        <div class="sidebar-overview__role">{{ userStore.profile?.roleCode || '管理员' }}</div>
       </div>
 
       <el-menu
@@ -84,7 +116,7 @@ onMounted(async () => {
         :collapse="isSidebarCollapsed"
         :collapse-transition="false"
         class="sidebar-menu"
-        text-color="#d8e6f2"
+        text-color="#c8d4e6"
         active-text-color="#ffffff"
         background-color="transparent"
         @select="handleSelect"
@@ -131,17 +163,29 @@ onMounted(async () => {
     </aside>
 
     <main class="layout-main">
-      <header v-if="isDashboard" class="layout-header">
-        <div>
-          <h1>租赁运营后台</h1>
-          <p>围绕房源、租客、房东、工单和权限的一体化管理平台。</p>
-        </div>
-        <div class="header-actions">
-          <div class="user-badge">
-            <div class="user-name">{{ userStore.profile?.displayName || '管理员' }}</div>
-            <div class="user-role">{{ userStore.profile?.roleCode || '系统管理员' }}</div>
+      <header class="topbar">
+        <div class="topbar-copy">
+          <div class="topbar-breadcrumb">
+            <span>{{ currentParentTitle }}</span>
+            <el-icon><ArrowRight /></el-icon>
+            <span>{{ currentTitle }}</span>
           </div>
-          <el-button type="primary" plain @click="handleLogout">退出登录</el-button>
+          <h1>{{ currentTitle }}</h1>
+          <p>{{ headerDescription }}</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="topbar-badge">
+            <span class="topbar-badge__label">角色</span>
+            <span class="topbar-badge__value">{{ userStore.profile?.roleCode || '管理员' }}</span>
+          </div>
+          <div class="topbar-badge topbar-badge--accent">
+            <span class="topbar-badge__label">账号</span>
+            <span class="topbar-badge__value">{{ userStore.profile?.displayName || '系统管理员' }}</span>
+          </div>
+          <el-button class="logout-button" @click="handleLogout">
+            <el-icon><SwitchButton /></el-icon>
+            退出登录
+          </el-button>
         </div>
       </header>
 
@@ -154,80 +198,125 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .layout-shell {
-  --sidebar-width: 260px;
-  min-height: 100vh;
+  --sidebar-width: 286px;
   display: grid;
-  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
   transition: grid-template-columns 0.24s ease;
 }
 
 .layout-shell--collapsed {
-  --sidebar-width: 84px;
+  --sidebar-width: 96px;
 }
 
 .layout-sidebar {
-  padding: 28px 14px 18px;
-  background: var(--sidebar-bg);
-  color: #fff;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  overflow: hidden;
+  gap: 14px;
+  color: #fff;
+  background: var(--sidebar-bg);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.06);
 }
 
-.layout-shell--collapsed .layout-sidebar {
-  padding-left: 10px;
-  padding-right: 10px;
+.brand-panel,
+.sidebar-overview {
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
 }
 
 .brand-panel {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
-  min-height: 72px;
+  min-height: 78px;
+  padding: 14px;
 }
 
 .brand-panel--collapsed {
   justify-content: center;
 }
 
+.brand-mark {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #eff6ff, #bfdbfe);
+  color: #1e3a8a;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
 .brand-copy {
   min-width: 0;
 }
 
-.brand-mark {
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #f59f00, #ffd166);
-  color: #3f2c00;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
 .brand-title {
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
 }
 
 .brand-subtitle {
+  margin-top: 4px;
+  color: rgba(226, 232, 240, 0.72);
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);
+}
+
+.sidebar-overview {
+  padding: 14px;
+}
+
+.sidebar-overview__label {
+  color: rgba(191, 219, 254, 0.78);
+  font-size: 12px;
+}
+
+.sidebar-overview__name {
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sidebar-overview__role {
+  margin-top: 4px;
+  color: rgba(226, 232, 240, 0.7);
+  font-size: 13px;
 }
 
 .sidebar-menu {
-  border-right: none;
   flex: 1;
   min-height: 0;
-  width: 100%;
+  padding: 8px 0;
 }
 
 .menu-icon {
   font-size: 18px;
+}
+
+.layout-sidebar :deep(.el-menu-item),
+.layout-sidebar :deep(.el-sub-menu__title) {
+  height: 46px;
+  margin-bottom: 6px;
+  border-radius: 14px;
+}
+
+.layout-sidebar :deep(.el-menu-item.is-active),
+.layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.32), rgba(37, 99, 235, 0.2));
+  box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.14);
+}
+
+.layout-sidebar :deep(.el-menu-item:hover),
+.layout-sidebar :deep(.el-sub-menu__title:hover) {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .layout-shell--collapsed :deep(.el-menu--collapse) {
@@ -239,7 +328,9 @@ onMounted(async () => {
   justify-content: center;
 }
 
-.layout-shell--collapsed :deep(.el-sub-menu__icon-arrow) {
+.layout-shell--collapsed :deep(.el-sub-menu__icon-arrow),
+.layout-shell--collapsed :deep(.el-menu-item span),
+.layout-shell--collapsed :deep(.el-sub-menu__title span) {
   display: none;
 }
 
@@ -248,108 +339,135 @@ onMounted(async () => {
   margin-right: 0;
 }
 
-.layout-shell--collapsed :deep(.el-menu-item span),
-.layout-shell--collapsed :deep(.el-sub-menu__title span) {
-  display: none;
-}
-
-.layout-shell--collapsed :deep(.el-menu-item .menu-icon),
-.layout-shell--collapsed :deep(.el-sub-menu__title .menu-icon) {
-  display: inline-flex;
-}
-
-.layout-shell--collapsed :deep(.el-menu-item:hover),
-.layout-shell--collapsed :deep(.el-sub-menu__title:hover) {
-  background: rgba(255, 255, 255, 0.12);
+.layout-shell--collapsed .sidebar-toggle {
+  width: 64px;
+  align-self: center;
 }
 
 .sidebar-toggle {
   width: 100%;
   min-height: 44px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.07);
   cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.layout-shell--collapsed .sidebar-toggle {
-  width: 64px;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .sidebar-toggle:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.22);
-}
-
-.sidebar-toggle__icon {
-  font-size: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
 }
 
 .layout-main {
-  padding: 22px;
-  height: 100vh;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  padding: 18px 18px 18px 8px;
 }
 
-.layout-header {
+.topbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  padding: 26px 28px;
-  margin-bottom: 20px;
-  border-radius: 28px;
+  gap: 18px;
+  padding: 26px 30px;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
   background:
-    linear-gradient(135deg, rgba(11, 114, 133, 0.92), rgba(22, 50, 79, 0.94)),
-    linear-gradient(135deg, #0b7285, #16324f);
-  color: #fff;
-  box-shadow: 0 18px 50px rgba(11, 31, 51, 0.2);
+    radial-gradient(circle at 0% 0%, rgba(96, 165, 250, 0.18), transparent 28%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 248, 252, 0.96));
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
 }
 
-.layout-header h1 {
-  margin: 0 0 8px;
+.topbar-copy {
+  min-width: 0;
 }
 
-.layout-header p {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.header-actions {
-  display: flex;
+.topbar-breadcrumb {
+  display: inline-flex;
   align-items: center;
-  gap: 14px;
-}
-
-.user-badge {
-  min-width: 120px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.user-name {
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--primary);
+  font-size: 12px;
   font-weight: 700;
 }
 
-.user-role {
+.topbar h1 {
+  margin: 16px 0 10px;
+  font-size: 32px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.topbar p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.75;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.topbar-badge {
+  min-width: 128px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.topbar-badge--accent {
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.92), rgba(236, 253, 245, 0.88));
+}
+
+.topbar-badge__label {
+  display: block;
+  color: var(--text-muted);
   font-size: 12px;
-  opacity: 0.74;
+}
+
+.topbar-badge__value {
+  display: block;
+  margin-top: 8px;
+  font-weight: 700;
+}
+
+.logout-button {
+  min-width: 124px;
 }
 
 .layout-content {
-  min-width: 0;
   flex: 1;
   min-height: 0;
+  padding-top: 18px;
   overflow: hidden;
+}
+
+@media (max-width: 1080px) {
+  .topbar {
+    flex-direction: column;
+  }
+
+  .topbar-actions {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 960px) {
@@ -358,47 +476,52 @@ onMounted(async () => {
   }
 
   .layout-sidebar {
-    padding-bottom: 0;
+    position: static;
+    height: auto;
   }
 
   .sidebar-toggle {
     display: none;
   }
 
-  .layout-header {
-    flex-direction: column;
-    align-items: stretch;
+  .layout-main {
+    padding: 12px;
   }
 
-  .header-actions {
-    justify-content: space-between;
+  .topbar {
+    padding: 22px 20px;
+    border-radius: 24px;
+  }
+
+  .topbar h1 {
+    font-size: 28px;
   }
 }
 
 :global(.sidebar-menu-popper.el-popper) {
-  border-radius: 14px;
-  border: 1px solid rgba(19, 34, 56, 0.08);
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 20px 42px rgba(15, 23, 42, 0.12);
 }
 
 :global(.sidebar-menu-popper .el-menu) {
-  min-width: 168px;
+  min-width: 176px;
   padding: 8px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.96);
 }
 
 :global(.sidebar-menu-popper .el-menu-item) {
-  color: #304256;
-  border-radius: 10px;
+  border-radius: 12px;
+  color: var(--text-secondary);
 }
 
 :global(.sidebar-menu-popper .el-menu-item:hover) {
-  background: #eef6ff;
-  color: #0b7285;
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--primary);
 }
 
 :global(.sidebar-menu-popper .el-menu-item.is-active) {
-  background: rgba(11, 114, 133, 0.12);
-  color: #0b7285;
+  background: rgba(37, 99, 235, 0.10);
+  color: var(--primary);
 }
 </style>

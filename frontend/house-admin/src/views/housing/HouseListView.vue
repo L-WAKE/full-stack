@@ -1,10 +1,10 @@
 <script setup>
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { createHouse, deleteHouse, getHouses, updateHouse, updateHouseStatus } from '../../api/houses'
 import { useAdaptiveTableHeight } from '../../composables/useAdaptiveTableHeight'
 import { useUserStore } from '../../stores/user'
-import { houseStatusMap } from '../../utils/locale'
+import { houseStatusMap, rentalModeMap } from '../../utils/locale'
 
 const props = defineProps({
   rentalMode: { type: String, required: true },
@@ -32,6 +32,39 @@ const form = reactive({
   status: 'VACANT',
   landlordName: '',
   tenantName: ''
+})
+
+const houseMetrics = computed(() => {
+  const list = page.value.list || []
+  const total = page.value.total || 0
+  const vacantCount = list.filter((item) => item.status === 'VACANT').length
+  const occupiedCount = list.filter((item) => item.status === 'OCCUPIED').length
+  const averageRent = list.length
+    ? Math.round(list.reduce((sum, item) => sum + Number(item.rentPrice || 0), 0) / list.length)
+    : 0
+
+  return [
+    {
+      label: `${rentalModeMap[props.rentalMode] || '当前'}房源`,
+      value: total,
+      meta: '按分页结果同步后台总数'
+    },
+    {
+      label: '当前页已出租',
+      value: occupiedCount,
+      meta: '帮助快速识别出租集中度'
+    },
+    {
+      label: '当前页待出租',
+      value: vacantCount,
+      meta: '建议优先跟进空置项目'
+    },
+    {
+      label: '平均租金',
+      value: averageRent ? `¥${averageRent}` : '¥0',
+      meta: '基于当前筛选结果估算'
+    }
+  ]
 })
 
 async function loadData() {
@@ -70,6 +103,14 @@ function openEdit(row) {
   dialogVisible.value = true
 }
 
+function resolveStatusType(status) {
+  if (status === 'OCCUPIED') return 'success'
+  if (status === 'VACANT') return 'warning'
+  if (status === 'OFFLINE') return 'info'
+  if (status === 'RENOVATING') return 'primary'
+  return 'info'
+}
+
 async function submit() {
   if (!form.houseName?.trim()) {
     ElMessage.warning('请输入房源名称')
@@ -84,7 +125,7 @@ async function submit() {
     return
   }
   if (!form.landlordName?.trim()) {
-    ElMessage.warning('请输入房东')
+    ElMessage.warning('请输入房东姓名')
     return
   }
 
@@ -112,11 +153,15 @@ async function quickStatus(row, status) {
   await loadData()
 }
 
-watch(() => props.rentalMode, () => {
-  query.pageNum = 1
-  resetForm()
-  loadData()
-}, { immediate: true })
+watch(
+  () => props.rentalMode,
+  () => {
+    query.pageNum = 1
+    resetForm()
+    loadData()
+  },
+  { immediate: true }
+)
 
 onMounted(() => {
   updateTableHeight()
@@ -125,63 +170,86 @@ onMounted(() => {
 
 <template>
   <div class="page-shell page-shell--table">
-    <div class="page-toolbar">
+    <section class="page-toolbar housing-toolbar">
       <div class="page-title">
         <div>
+          <span class="page-eyebrow">Housing Ledger</span>
           <h2>{{ title }}</h2>
-          <div class="page-subtitle">统一管理房源台账，并按租赁模式查看对应业务数据。</div>
+          <div class="page-subtitle">
+            以更贴近主流管理后台的方式组织房源台账，让筛选、状态切换和基础信息维护都更直观。
+          </div>
         </div>
-        <el-button v-if="userStore.hasPermission('house:add')" type="primary" @click="openCreate">新增房源</el-button>
+        <el-button v-if="userStore.hasPermission('house:add')" type="primary" @click="openCreate">
+          新增房源
+        </el-button>
       </div>
+
       <el-form class="filter-form" inline>
         <el-form-item label="关键词">
           <el-input v-model="query.keyword" placeholder="请输入房源编号或名称" clearable />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="query.status" placeholder="全部" clearable style="width: 160px">
+          <el-select v-model="query.status" placeholder="全部状态" clearable style="width: 180px">
             <el-option v-for="(label, key) in houseStatusMap" :key="key" :label="label" :value="key" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="loadData">查询</el-button>
+          <el-button type="primary" @click="loadData">查询房源</el-button>
         </el-form-item>
       </el-form>
-    </div>
+    </section>
 
-    <div ref="tableCardRef" class="table-card house-table-card">
+    <section class="metric-strip">
+      <article v-for="item in houseMetrics" :key="item.label" class="metric-card">
+        <div class="metric-label">{{ item.label }}</div>
+        <div class="metric-value">{{ item.value }}</div>
+        <div class="metric-meta">{{ item.meta }}</div>
+      </article>
+    </section>
+
+    <section ref="tableCardRef" class="table-card house-table-card">
       <el-table v-loading="loading" :data="page.list" :height="tableHeight" stripe>
         <el-table-column prop="houseCode" label="房源编号" width="140" />
         <el-table-column prop="houseName" label="房源名称" min-width="180" />
-        <el-table-column prop="projectName" label="所属项目" min-width="140" />
-        <el-table-column prop="address" label="详细地址" min-width="200" />
-        <el-table-column prop="area" label="面积" width="90" />
-        <el-table-column prop="rentPrice" label="租金" width="100" />
-        <el-table-column prop="landlordName" label="房东" min-width="110" />
-        <el-table-column prop="tenantName" label="租客" min-width="110" />
-        <el-table-column label="状态" width="110">
+        <el-table-column prop="projectName" label="所属项目" min-width="150" />
+        <el-table-column prop="address" label="详细地址" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="area" label="面积" width="100">
+          <template #default="{ row }">{{ row.area }} ㎡</template>
+        </el-table-column>
+        <el-table-column prop="rentPrice" label="租金" width="120">
+          <template #default="{ row }">¥{{ row.rentPrice }}</template>
+        </el-table-column>
+        <el-table-column prop="landlordName" label="房东" min-width="120" />
+        <el-table-column prop="tenantName" label="租客" min-width="120" />
+        <el-table-column label="状态" width="120">
           <template #default="{ row }">
-            <el-tag>{{ houseStatusMap[row.status] || row.status }}</el-tag>
+            <el-tag :type="resolveStatusType(row.status)">{{ houseStatusMap[row.status] || row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" width="250" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="userStore.hasPermission('house:edit')" link type="primary" @click="openEdit(row)">编辑</el-button>
+            <el-button v-if="userStore.hasPermission('house:edit')" link type="primary" @click="openEdit(row)">
+              编辑
+            </el-button>
             <el-button link @click="quickStatus(row, 'OCCUPIED')">设为已出租</el-button>
             <el-button link @click="quickStatus(row, 'VACANT')">设为空置</el-button>
             <el-button link type="danger" @click="remove(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination
-        v-model:current-page="query.pageNum"
-        v-model:page-size="query.pageSize"
-        :total="page.total"
-        layout="total, prev, pager, next"
-        @current-change="loadData"
-      />
-    </div>
 
-    <el-dialog v-model="dialogVisible" :title="editingId ? '编辑房源' : '新增房源'" width="640px">
+      <div class="table-card__footer">
+        <el-pagination
+          v-model:current-page="query.pageNum"
+          v-model:page-size="query.pageSize"
+          :total="page.total"
+          layout="total, prev, pager, next"
+          @current-change="loadData"
+        />
+      </div>
+    </section>
+
+    <el-dialog v-model="dialogVisible" :title="editingId ? '编辑房源' : '新增房源'" width="680px">
       <el-form label-width="110px">
         <el-form-item label="房源名称"><el-input v-model="form.houseName" /></el-form-item>
         <el-form-item label="所属项目"><el-input v-model="form.projectName" /></el-form-item>
@@ -204,9 +272,9 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
-.filter-form {
-  margin-top: 18px;
+<style scoped lang="scss">
+.housing-toolbar {
+  padding-bottom: 14px;
 }
 
 .house-table-card :deep(.el-table) {
@@ -215,10 +283,5 @@ onMounted(() => {
 
 .house-table-card :deep(.el-table__body-wrapper) {
   overflow-y: auto;
-}
-
-.el-pagination {
-  margin-top: 16px;
-  justify-content: flex-end;
 }
 </style>
