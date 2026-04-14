@@ -28,7 +28,7 @@ http.interceptors.response.use(
     ElMessage.error(message)
     if (error.response?.status === 401) {
       localStorage.removeItem('house_admin_token')
-      window.location.href = '/login'
+      window.location.hash = '#/login'
     }
     return Promise.reject(error)
   }
