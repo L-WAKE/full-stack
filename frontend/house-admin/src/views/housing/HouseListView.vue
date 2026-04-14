@@ -274,11 +274,40 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .housing-toolbar {
-  padding-bottom: 14px;
+  padding-bottom: 10px;
+}
+
+.housing-toolbar :deep(.page-title) {
+  align-items: center;
+}
+
+.housing-toolbar :deep(.page-title h2) {
+  margin-top: 6px;
+}
+
+.housing-toolbar :deep(.filter-form) {
+  align-items: flex-end;
+}
+
+.housing-toolbar :deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+.housing-toolbar :deep(.el-input),
+.housing-toolbar :deep(.el-select) {
+  width: 180px;
+}
+
+.house-table-card {
+  border-top: 1px solid var(--line-color);
 }
 
 .house-table-card :deep(.el-table) {
   width: 100%;
+}
+
+.house-table-card :deep(.el-table__header-wrapper th) {
+  background: #f7f8fa;
 }
 
 .house-table-card :deep(.el-table__body-wrapper) {
