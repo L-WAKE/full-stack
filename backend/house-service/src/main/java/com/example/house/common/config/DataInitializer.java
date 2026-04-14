@@ -17,6 +17,8 @@ import com.example.house.modules.customer.mapper.LandlordMapper;
 import com.example.house.modules.customer.mapper.TenantMapper;
 import com.example.house.modules.housing.entity.HouseEntity;
 import com.example.house.modules.housing.mapper.HouseMapper;
+import com.example.house.modules.notice.entity.NoticeEntity;
+import com.example.house.modules.notice.mapper.NoticeMapper;
 import com.example.house.modules.workorder.entity.CleaningOrderEntity;
 import com.example.house.modules.workorder.entity.MaintenanceOrderEntity;
 import com.example.house.modules.workorder.mapper.CleaningOrderMapper;
@@ -27,6 +29,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -40,6 +43,7 @@ public class DataInitializer implements ApplicationRunner {
     private final LandlordMapper landlordMapper;
     private final TenantMapper tenantMapper;
     private final HouseMapper houseMapper;
+    private final NoticeMapper noticeMapper;
     private final MaintenanceOrderMapper maintenanceOrderMapper;
     private final CleaningOrderMapper cleaningOrderMapper;
     private final PasswordEncoder passwordEncoder;
@@ -53,6 +57,7 @@ public class DataInitializer implements ApplicationRunner {
         LandlordMapper landlordMapper,
         TenantMapper tenantMapper,
         HouseMapper houseMapper,
+        NoticeMapper noticeMapper,
         MaintenanceOrderMapper maintenanceOrderMapper,
         CleaningOrderMapper cleaningOrderMapper,
         PasswordEncoder passwordEncoder
@@ -65,6 +70,7 @@ public class DataInitializer implements ApplicationRunner {
         this.landlordMapper = landlordMapper;
         this.tenantMapper = tenantMapper;
         this.houseMapper = houseMapper;
+        this.noticeMapper = noticeMapper;
         this.maintenanceOrderMapper = maintenanceOrderMapper;
         this.cleaningOrderMapper = cleaningOrderMapper;
         this.passwordEncoder = passwordEncoder;
@@ -97,29 +103,27 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     private void seedMenus() {
-        if (menuMapper.selectCount(null) > 0) {
-            return;
-        }
-        insertMenu(1L, 0L, "dashboard", "Dashboard", "MENU", "/dashboard", "dashboard:view", 1);
-        insertMenu(2L, 0L, "housing", "Housing", "MENU", "/housing", null, 2);
-        insertMenu(3L, 2L, "wholeRent", "Whole Rent", "MENU", "/housing/whole-rent", "house:view", 3);
-        insertMenu(4L, 2L, "sharedRent", "Shared Rent", "MENU", "/housing/shared-rent", "house:view", 4);
-        insertMenu(5L, 2L, "centralized", "Centralized", "MENU", "/housing/centralized", "house:view", 5);
-        insertMenu(6L, 0L, "customer", "Customer", "MENU", "/customer", null, 6);
-        insertMenu(7L, 6L, "tenant", "Tenant", "MENU", "/customer/tenant", "tenant:view", 7);
-        insertMenu(8L, 6L, "landlord", "Landlord", "MENU", "/customer/landlord", "landlord:view", 8);
-        insertMenu(9L, 0L, "workorder", "Workorder", "MENU", "/workorder", null, 9);
-        insertMenu(10L, 9L, "maintenance", "Maintenance", "MENU", "/workorder/maintenance", "maintenance:view", 10);
-        insertMenu(11L, 9L, "cleaning", "Cleaning", "MENU", "/workorder/cleaning", "cleaning:view", 11);
-        insertMenu(12L, 0L, "system", "System", "MENU", "/system", null, 12);
-        insertMenu(13L, 12L, "employee", "Employee", "MENU", "/system/employee", "employee:view", 13);
-        insertMenu(14L, 12L, "role", "Role", "MENU", "/system/role", "role:view", 14);
-        insertMenu(15L, 12L, "menu", "Menu", "MENU", "/system/menu", "menu:view", 15);
-        insertMenu(16L, 3L, "houseAdd", "Add House", "BUTTON", "", "house:add", 16);
-        insertMenu(17L, 3L, "houseEdit", "Edit House", "BUTTON", "", "house:edit", 17);
+        insertMenuIfAbsent(1L, 0L, "dashboard", "Dashboard", "MENU", "/dashboard", "dashboard:view", 1);
+        insertMenuIfAbsent(2L, 0L, "housing", "Housing", "MENU", "/housing", null, 2);
+        insertMenuIfAbsent(3L, 2L, "wholeRent", "Whole Rent", "MENU", "/housing/whole-rent", "house:view", 3);
+        insertMenuIfAbsent(4L, 2L, "sharedRent", "Shared Rent", "MENU", "/housing/shared-rent", "house:view", 4);
+        insertMenuIfAbsent(5L, 2L, "centralized", "Centralized", "MENU", "/housing/centralized", "house:view", 5);
+        insertMenuIfAbsent(6L, 0L, "customer", "Customer", "MENU", "/customer", null, 6);
+        insertMenuIfAbsent(7L, 6L, "tenant", "Tenant", "MENU", "/customer/tenant", "tenant:view", 7);
+        insertMenuIfAbsent(8L, 6L, "landlord", "Landlord", "MENU", "/customer/landlord", "landlord:view", 8);
+        insertMenuIfAbsent(9L, 0L, "workorder", "Workorder", "MENU", "/workorder", null, 9);
+        insertMenuIfAbsent(10L, 9L, "maintenance", "Maintenance", "MENU", "/workorder/maintenance", "maintenance:view", 10);
+        insertMenuIfAbsent(11L, 9L, "cleaning", "Cleaning", "MENU", "/workorder/cleaning", "cleaning:view", 11);
+        insertMenuIfAbsent(12L, 0L, "system", "System", "MENU", "/system", null, 12);
+        insertMenuIfAbsent(13L, 12L, "employee", "Employee", "MENU", "/system/employee", "employee:view", 13);
+        insertMenuIfAbsent(14L, 12L, "role", "Role", "MENU", "/system/role", "role:view", 14);
+        insertMenuIfAbsent(15L, 12L, "menu", "Menu", "MENU", "/system/menu", "menu:view", 15);
+        insertMenuIfAbsent(16L, 3L, "houseAdd", "Add House", "BUTTON", "", "house:add", 16);
+        insertMenuIfAbsent(17L, 3L, "houseEdit", "Edit House", "BUTTON", "", "house:edit", 17);
+        insertMenuIfAbsent(18L, 12L, "notice", "Notice", "MENU", "/system/notice", "notice:view", 18);
 
-        List<Long> adminMenuIds = List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L, 15L, 16L, 17L);
-        List<Long> managerMenuIds = List.of(1L, 2L, 3L, 4L, 5L, 9L, 10L, 11L);
+        List<Long> adminMenuIds = List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L, 15L, 16L, 17L, 18L);
+        List<Long> managerMenuIds = List.of(1L, 2L, 3L, 4L, 5L, 9L, 10L, 11L, 12L, 18L);
         List<Long> operatorMenuIds = List.of(1L, 6L, 7L, 8L, 9L, 10L, 11L);
         insertRoleMenus(1L, adminMenuIds);
         insertRoleMenus(2L, managerMenuIds);
@@ -149,6 +153,11 @@ public class DataInitializer implements ApplicationRunner {
         if (cleaningOrderMapper.selectCount(null) == 0) {
             insertCleaning(1L, "BJ-202604030001", "City Mansion 5-1602", "Deep clean", "2026-04-15 10:00", "Alice", "ASSIGNED");
             insertCleaning(2L, "BJ-202604060001", "Youth Apartment A-302", "Checkout clean", "2026-04-16 14:00", "Bob", "PENDING_ASSIGN");
+        }
+        if (noticeMapper.selectCount(null) == 0) {
+            insertNotice(1L, "五一假期值班安排", "各门店按照排班表执行值班安排", "请各区域负责人在 4 月 28 日前确认值班表并同步到门店群。", "PUBLISHED", 1, LocalDateTime.of(2026, 4, 12, 10, 0));
+            insertNotice(2L, "本周租客满意度回访提醒", "客服团队需完成重点租客回访", "请客服团队于本周五下班前完成满意度回访，并登记异常问题。", "DRAFT", 0, null);
+            insertNotice(3L, "保洁供应商月度考核通知", "4 月供应商考核开始收集材料", "运营和保洁主管需在月底前提交供应商考核结果，用于下月结算。", "OFFLINE", 0, LocalDateTime.of(2026, 4, 5, 9, 30));
         }
     }
 
@@ -196,8 +205,21 @@ public class DataInitializer implements ApplicationRunner {
         menuMapper.insert(menu);
     }
 
+    private void insertMenuIfAbsent(Long id, Long parentId, String code, String name, String type, String path, String permissionCode, int sortNo) {
+        if (menuMapper.selectById(id) != null) {
+            return;
+        }
+        insertMenu(id, parentId, code, name, type, path, permissionCode, sortNo);
+    }
+
     private void insertRoleMenus(Long roleId, List<Long> menuIds) {
         for (Long menuId : menuIds) {
+            Long count = roleMenuMapper.selectCount(new LambdaQueryWrapper<SysRoleMenuEntity>()
+                .eq(SysRoleMenuEntity::getRoleId, roleId)
+                .eq(SysRoleMenuEntity::getMenuId, menuId));
+            if (count != null && count > 0) {
+                continue;
+            }
             SysRoleMenuEntity relation = new SysRoleMenuEntity();
             relation.setRoleId(roleId);
             relation.setMenuId(menuId);
@@ -292,5 +314,21 @@ public class DataInitializer implements ApplicationRunner {
         entity.setUpdatedBy(1L);
         entity.setDeleted(0);
         cleaningOrderMapper.insert(entity);
+    }
+
+    private void insertNotice(Long id, String title, String summary, String content, String status, int pinned, LocalDateTime publishTime) {
+        NoticeEntity entity = new NoticeEntity();
+        entity.setId(id);
+        entity.setTitle(title);
+        entity.setSummary(summary);
+        entity.setContent(content);
+        entity.setStatus(status);
+        entity.setPinned(pinned);
+        entity.setPublishTime(publishTime);
+        entity.setOrgId(1L);
+        entity.setCreatedBy(1L);
+        entity.setUpdatedBy(1L);
+        entity.setDeleted(0);
+        noticeMapper.insert(entity);
     }
 }

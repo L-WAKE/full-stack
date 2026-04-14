@@ -18,6 +18,7 @@ export const employeeStatusMap = {
 export const roleCodeMap = {
   ADMIN: '系统管理员',
   MANAGER: '门店经理',
+  HOUSE_MANAGER: '房源经理',
   OPERATOR: '运营专员'
 }
 
@@ -55,6 +56,12 @@ export const cleaningStatusMap = {
   CANCELLED: '已取消'
 }
 
+export const noticeStatusMap = {
+  DRAFT: '草稿',
+  PUBLISHED: '已发布',
+  OFFLINE: '已下线'
+}
+
 export const routeTitleMap = {
   '/dashboard': '首页看板',
   '/housing': '房源管理',
@@ -70,7 +77,8 @@ export const routeTitleMap = {
   '/system': '系统管理',
   '/system/employee': '员工管理',
   '/system/role': '角色管理',
-  '/system/menu': '菜单管理'
+  '/system/menu': '菜单管理',
+  '/system/notice': '公告管理'
 }
 
 export function localizeProfile(profile) {

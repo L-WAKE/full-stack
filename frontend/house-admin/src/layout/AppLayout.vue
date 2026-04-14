@@ -36,7 +36,8 @@ const menuIconMap = {
   '/system': Setting,
   '/system/employee': User,
   '/system/role': Files,
-  '/system/menu': Setting
+  '/system/menu': Setting,
+  '/system/notice': Files
 }
 
 const menus = computed(() => userStore.menus)

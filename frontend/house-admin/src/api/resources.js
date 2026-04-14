@@ -99,3 +99,35 @@ export function createMenu(data) {
 export function updateMenu(id, data) {
   return http.put(`/menus/${id}`, data)
 }
+
+export function getNotices(params) {
+  return http.get('/notices', { params })
+}
+
+export function getNoticeDetail(id) {
+  return http.get(`/notices/${id}`)
+}
+
+export function createNotice(data) {
+  return http.post('/notices', data)
+}
+
+export function updateNotice(id, data) {
+  return http.put(`/notices/${id}`, data)
+}
+
+export function deleteNotice(id) {
+  return http.delete(`/notices/${id}`)
+}
+
+export function publishNotice(id) {
+  return http.put(`/notices/${id}/publish`)
+}
+
+export function offlineNotice(id) {
+  return http.put(`/notices/${id}/offline`)
+}
+
+export function updateNoticePin(id, pinned) {
+  return http.put(`/notices/${id}/pin`, { pinned })
+}

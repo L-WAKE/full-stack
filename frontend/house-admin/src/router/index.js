@@ -12,6 +12,7 @@ const CleaningView = () => import('../views/workorder/CleaningView.vue')
 const EmployeeView = () => import('../views/system/EmployeeView.vue')
 const RoleView = () => import('../views/system/RoleView.vue')
 const MenuView = () => import('../views/system/MenuView.vue')
+const NoticeView = () => import('../views/system/NoticeView.vue')
 
 const routes = [
   { path: '/login', component: LoginView },
@@ -30,7 +31,8 @@ const routes = [
       { path: 'workorder/cleaning', component: CleaningView },
       { path: 'system/employee', component: EmployeeView },
       { path: 'system/role', component: RoleView },
-      { path: 'system/menu', component: MenuView }
+      { path: 'system/menu', component: MenuView },
+      { path: 'system/notice', component: NoticeView }
     ]
   }
 ]
