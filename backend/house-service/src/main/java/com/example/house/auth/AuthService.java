@@ -13,10 +13,7 @@ import com.example.house.modules.auth.mapper.SysRoleMenuMapper;
 import com.example.house.modules.auth.mapper.SysUserMapper;
 import com.example.house.modules.auth.mapper.SysUserRoleMapper;
 import com.example.house.modules.system.MenuItem;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -37,8 +34,7 @@ public class AuthService {
     private final SysMenuMapper menuMapper;
     private final SysRoleMenuMapper roleMenuMapper;
     private final PasswordEncoder passwordEncoder;
-    private final StringRedisTemplate redisTemplate;
-    private final ObjectMapper objectMapper;
+    private final AuthSessionStore authSessionStore;
     private final long tokenTtlMinutes;
 
     public AuthService(
@@ -48,8 +44,7 @@ public class AuthService {
         SysMenuMapper menuMapper,
         SysRoleMenuMapper roleMenuMapper,
         PasswordEncoder passwordEncoder,
-        StringRedisTemplate redisTemplate,
-        ObjectMapper objectMapper,
+        AuthSessionStore authSessionStore,
         @Value("${house.auth.token-ttl-minutes:120}") long tokenTtlMinutes
     ) {
         this.userMapper = userMapper;
@@ -58,8 +53,7 @@ public class AuthService {
         this.menuMapper = menuMapper;
         this.roleMenuMapper = roleMenuMapper;
         this.passwordEncoder = passwordEncoder;
-        this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper;
+        this.authSessionStore = authSessionStore;
         this.tokenTtlMinutes = tokenTtlMinutes;
     }
 
@@ -73,28 +67,16 @@ public class AuthService {
 
         AuthUser authUser = buildAuthUser(user);
         String token = UUID.randomUUID().toString().replace("-", "");
-        try {
-            redisTemplate.opsForValue().set(tokenKey(token), objectMapper.writeValueAsString(authUser), Duration.ofMinutes(tokenTtlMinutes));
-        } catch (JsonProcessingException ex) {
-            throw new BusinessException(5001, "Failed to create login session");
-        }
+        authSessionStore.save(token, authUser, Duration.ofMinutes(tokenTtlMinutes));
         return new LoginResult(token, authUser);
     }
 
     public AuthUser getUserByToken(String token) {
-        String payload = redisTemplate.opsForValue().get(tokenKey(token));
-        if (payload == null) {
-            throw new BusinessException(4010, "Login session expired");
-        }
-        try {
-            return objectMapper.readValue(payload, AuthUser.class);
-        } catch (JsonProcessingException ex) {
-            throw new BusinessException(4010, "Login session expired");
-        }
+        return authSessionStore.get(token);
     }
 
     public void logout(String token) {
-        redisTemplate.delete(tokenKey(token));
+        authSessionStore.delete(token);
     }
 
     public List<MenuItem> getMenus(AuthUser user) {
@@ -145,10 +127,6 @@ public class AuthService {
             .map(child -> toMenuItem(child, childrenByParentId))
             .toList();
         return new MenuItem(menu.getMenuCode(), menu.getMenuName(), menu.getPath(), null, menu.getPermissionCode(), children);
-    }
-
-    private String tokenKey(String token) {
-        return "house:auth:token:" + token;
     }
 
     public record LoginCommand(String username, String password) {
