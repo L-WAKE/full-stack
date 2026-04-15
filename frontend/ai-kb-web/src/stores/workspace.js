@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 
 import { fetchConversations, fetchMessages, retrievalSearch } from "../api/chat";
-import { fetchOverview } from "../api/dashboard";
+import { fetchOverview, fetchRecentActivity } from "../api/dashboard";
 import {
   deleteDocument,
   fetchDocumentChunks,
@@ -25,6 +25,20 @@ export const useWorkspaceStore = defineStore("workspace", {
       space_count: 0,
       document_count: 0,
       conversation_count: 0,
+      ready_count: 0,
+      processing_count: 0,
+      failed_count: 0,
+      private_count: 0,
+      shared_count: 0,
+      chunk_count: 0,
+      avg_chunks_per_document: 0,
+      vector_store_mode: "uninitialized",
+      coverage_ratio: 0,
+    },
+    recentActivity: {
+      documents: [],
+      conversations: [],
+      chunks: [],
     },
     spaces: [],
     activeSpaceId: null,
@@ -39,6 +53,11 @@ export const useWorkspaceStore = defineStore("workspace", {
     async loadOverview() {
       const { data } = await fetchOverview();
       this.overview = data;
+    },
+    async loadRecentActivity() {
+      const { data } = await fetchRecentActivity();
+      this.recentActivity = data;
+      return data;
     },
     async loadSpaces() {
       const { data } = await fetchSpaces();

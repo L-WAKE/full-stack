@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.models.entities import (
+    ConversationCitation,
     Document,
     DocumentChunk,
     DocumentChunkEmbedding,
@@ -107,10 +108,14 @@ class DocumentService:
         document = self._get_membership_model(db, document_id, user_id)
         if not document:
             return False
+        chunk_ids = select(DocumentChunk.id).where(DocumentChunk.document_id == document_id)
         try:
             embedding_service.delete_document_points(document_id)
         except Exception:
             pass
+        db.execute(delete(ConversationCitation).where(ConversationCitation.chunk_id.in_(chunk_ids)))
+        db.execute(delete(ConversationCitation).where(ConversationCitation.document_id == document_id))
+        db.execute(delete(DocumentChunkEmbedding).where(DocumentChunkEmbedding.chunk_id.in_(chunk_ids)))
         db.execute(delete(DocumentChunk).where(DocumentChunk.document_id == document_id))
         db.delete(document)
         db.commit()
@@ -168,7 +173,7 @@ class DocumentService:
             sections = parser_service.parse(document.storage_path, document.file_type)
             parsed_chunks = chunk_service.chunk(sections)
             if not parsed_chunks:
-                raise ValueError("未从文档中解析到可切片文本")
+                raise ValueError("No parsable text chunks were extracted from the document.")
 
             db.execute(
                 delete(DocumentChunkEmbedding).where(
@@ -236,7 +241,10 @@ class DocumentService:
             try:
                 embedding_service.upsert_chunks(qdrant_points)
             except Exception as vector_exc:
-                document.failure_reason = f"向量索引暂不可用，已退回数据库检索: {vector_exc}"
+                document.failure_reason = (
+                    "Vector index is temporarily unavailable. The document was saved and can still be searched "
+                    f"through database fallback mode. Details: {vector_exc}"
+                )
             db.commit()
         except Exception as exc:
             db.rollback()

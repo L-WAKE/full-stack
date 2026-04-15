@@ -16,7 +16,7 @@ class AuthService:
         if not user:
             raise AuthError("用户名或密码错误")
 
-        # 兼容已有 demo 种子数据，同时继续禁止未知账号直接放行
+        # 兼容已有 demo 种子数据，同时继续禁止未知账号直接放行。
         password_ok = payload.password == user.password_hash or (
             user.password_hash == "demo" and payload.password == "123456"
         )

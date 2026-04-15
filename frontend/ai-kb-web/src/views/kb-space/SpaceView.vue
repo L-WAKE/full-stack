@@ -8,6 +8,21 @@ import { useWorkspaceStore } from "../../stores/workspace";
 const authStore = useAuthStore();
 const workspaceStore = useWorkspaceStore();
 
+const scenarioTemplates = [
+  {
+    name: "客户支持知识库",
+    description: "面向客服、售后团队，沉淀 FAQ、工单处理流程、产品异常排查和客户沟通口径。",
+  },
+  {
+    name: "售前与实施交付知识库",
+    description: "沉淀产品资料、标书答疑、实施 checklist、接口规范和项目交付模板。",
+  },
+  {
+    name: "制度与合规政策知识库",
+    description: "用于沉淀权限管理、审批规则、内部制度、流程边界和审计要求。",
+  },
+];
+
 const createForm = reactive({
   name: "",
   description: "",
@@ -26,23 +41,22 @@ const currentRole = computed(() => {
 
 const canManageMembers = computed(() => authStore.profile?.role === "admin" || currentRole.value === "owner");
 
-function memberActionReason(row) {
-  if (canManageMembers.value && row.user_id !== authStore.profile?.id) return "";
-  if (!canManageMembers.value) return "只有当前空间 owner 或系统 admin 可以调整成员角色。";
-  return "暂不支持修改或移除自己，请由其他 owner 操作。";
-}
-
 onMounted(async () => {
   await workspaceStore.loadSpaces();
   await workspaceStore.loadActiveSpaceDetail();
 });
+
+function applyTemplate(item) {
+  createForm.name = item.name;
+  createForm.description = item.description;
+}
 
 async function createNewSpace() {
   if (!createForm.name) return;
   await workspaceStore.addSpace(createForm);
   createForm.name = "";
   createForm.description = "";
-  ElMessage.success("知识库空间已创建。");
+  ElMessage.success("知识空间已创建");
 }
 
 async function refreshCurrentSpace(spaceId) {
@@ -57,19 +71,19 @@ async function assignMembers() {
     .filter((item) => Number.isInteger(item) && item > 0);
 
   if (ids.length === 0) {
-    ElMessage.warning("请输入用户 ID，多个用户请用英文逗号分隔。");
+    ElMessage.warning("请输入用户 ID，多个用户请用英文逗号分隔");
     return;
   }
 
   await workspaceStore.addSpaceMembers({ user_ids: ids, role: memberForm.role });
   memberForm.userIds = "";
-  ElMessage.success("空间成员已更新。");
+  ElMessage.success("空间成员已更新");
 }
 
 async function changeRole(row, role) {
   try {
     await workspaceStore.changeMemberRole(row.user_id, role);
-    ElMessage.success("成员角色已更新。");
+    ElMessage.success("成员角色已更新");
   } catch (error) {
     ElMessage.error(error?.response?.data?.detail || "角色更新失败");
   }
@@ -79,7 +93,7 @@ async function removeMember(row) {
   try {
     await ElMessageBox.confirm(`确认移除成员 ${row.display_name} 吗？`, "移除确认", { type: "warning" });
     await workspaceStore.deleteMember(row.user_id);
-    ElMessage.success("成员已移除。");
+    ElMessage.success("成员已移除");
   } catch (error) {
     if (error !== "cancel") {
       ElMessage.error(error?.response?.data?.detail || "成员移除失败");
@@ -94,8 +108,10 @@ async function removeMember(row) {
       <div class="page-title">
         <div>
           <span class="page-eyebrow">Knowledge Spaces</span>
-          <h2>空间管理</h2>
-          <p class="page-subtitle">用于管理知识空间、成员角色与协作权限，让文档与问答建立清晰边界。</p>
+          <h2>按企业业务域组织知识空间</h2>
+          <p class="page-subtitle">
+            用空间隔离不同业务场景和权限边界，让文档、成员和问答上下文保持一致，适合客服、售前、交付、制度管理等场景。
+          </p>
         </div>
       </div>
     </section>
@@ -104,13 +120,28 @@ async function removeMember(row) {
       <article class="panel-card">
         <div class="page-title">
           <div>
+            <span class="page-eyebrow">Templates</span>
+            <h2>企业场景模板</h2>
+          </div>
+        </div>
+        <div class="template-list">
+          <button v-for="item in scenarioTemplates" :key="item.name" type="button" class="template-item" @click="applyTemplate(item)">
+            <strong>{{ item.name }}</strong>
+            <span>{{ item.description }}</span>
+          </button>
+        </div>
+      </article>
+
+      <article class="panel-card">
+        <div class="page-title">
+          <div>
             <span class="page-eyebrow">Create</span>
-            <h2>创建空间</h2>
+            <h2>创建知识空间</h2>
           </div>
         </div>
         <el-form label-position="top" class="panel-form">
           <el-form-item label="空间名称">
-            <el-input v-model="createForm.name" placeholder="例如：租赁业务知识库" />
+            <el-input v-model="createForm.name" placeholder="例如：客户支持知识库" />
           </el-form-item>
           <el-form-item label="空间说明">
             <el-input v-model="createForm.description" type="textarea" :rows="4" />
@@ -118,32 +149,32 @@ async function removeMember(row) {
           <el-button type="primary" @click="createNewSpace">新建空间</el-button>
         </el-form>
       </article>
-
-      <article class="table-card">
-        <div class="table-header">
-          <div>
-            <h3>空间列表</h3>
-            <p>查看当前空间的文档与成员规模。</p>
-          </div>
-        </div>
-        <el-table :data="workspaceStore.spaces" style="width: 100%">
-          <el-table-column prop="name" label="空间" min-width="180" />
-          <el-table-column prop="description" label="描述" min-width="220" />
-          <el-table-column prop="document_count" label="文档数" width="100" />
-          <el-table-column prop="member_count" label="成员数" width="100" />
-          <el-table-column label="操作" width="120">
-            <template #default="{ row }">
-              <el-button link type="primary" @click="refreshCurrentSpace(row.id)">查看成员</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </article>
     </section>
 
     <article class="table-card">
       <div class="table-header">
         <div>
-          <h3>成员角色管理</h3>
+          <h3>空间列表</h3>
+          <p>查看当前空间的文档规模与成员规模。</p>
+        </div>
+      </div>
+      <el-table :data="workspaceStore.spaces" style="width: 100%">
+        <el-table-column prop="name" label="空间" min-width="180" />
+        <el-table-column prop="description" label="描述" min-width="240" />
+        <el-table-column prop="document_count" label="文档数" width="100" />
+        <el-table-column prop="member_count" label="成员数" width="100" />
+        <el-table-column label="操作" width="120">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="refreshCurrentSpace(row.id)">查看成员</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </article>
+
+    <article class="table-card">
+      <div class="table-header">
+        <div>
+          <h3>成员与权限管理</h3>
           <p>当前空间角色：{{ currentRole || "-" }}</p>
         </div>
         <span v-if="currentRole" class="status-chip">{{ currentRole }}</span>
@@ -157,44 +188,28 @@ async function removeMember(row) {
           <el-table-column prop="username" label="账号" min-width="140" />
           <el-table-column prop="role" label="空间角色" width="220">
             <template #default="{ row }">
-              <el-tooltip
-                :disabled="canManageMembers && row.user_id !== authStore.profile?.id"
-                :content="memberActionReason(row)"
-                placement="top"
+              <el-select
+                :model-value="row.role"
+                size="small"
+                style="width: 140px"
+                :disabled="!canManageMembers || row.user_id === authStore.profile?.id"
+                @change="(value) => changeRole(row, value)"
               >
-                <div>
-                  <el-select
-                    :model-value="row.role"
-                    size="small"
-                    style="width: 140px"
-                    :disabled="!canManageMembers || row.user_id === authStore.profile?.id"
-                    @change="(value) => changeRole(row, value)"
-                  >
-                    <el-option label="owner" value="owner" />
-                    <el-option label="member" value="member" />
-                  </el-select>
-                </div>
-              </el-tooltip>
+                <el-option label="owner" value="owner" />
+                <el-option label="member" value="member" />
+              </el-select>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="140">
             <template #default="{ row }">
-              <el-tooltip
-                :disabled="canManageMembers && row.user_id !== authStore.profile?.id"
-                :content="memberActionReason(row)"
-                placement="top"
+              <el-button
+                link
+                type="danger"
+                :disabled="!canManageMembers || row.user_id === authStore.profile?.id"
+                @click="removeMember(row)"
               >
-                <div>
-                  <el-button
-                    link
-                    type="danger"
-                    :disabled="!canManageMembers || row.user_id === authStore.profile?.id"
-                    @click="removeMember(row)"
-                  >
-                    移除
-                  </el-button>
-                </div>
-              </el-tooltip>
+                移除
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -230,14 +245,31 @@ async function removeMember(row) {
 <style scoped>
 .space-grid {
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
 }
 
+.template-list,
 .panel-form,
 .member-form {
   display: grid;
   gap: var(--space-3);
+}
+
+.template-item {
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  padding: 12px;
+  border: 1px solid var(--line-color);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.94));
+  cursor: pointer;
+}
+
+.template-item span {
+  color: var(--text-muted);
+  line-height: 1.7;
 }
 
 .table-header {
@@ -245,12 +277,12 @@ async function removeMember(row) {
   justify-content: space-between;
   gap: var(--space-3);
   align-items: flex-start;
-  padding: var(--space-5) var(--space-5) var(--space-3);
+  padding: 14px 16px 10px;
 }
 
 .table-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .table-header p {
@@ -261,7 +293,7 @@ async function removeMember(row) {
 }
 
 .member-actions {
-  padding: var(--space-4) var(--space-5) var(--space-5);
+  padding: 12px 16px 16px;
 }
 
 @media (max-width: 1100px) {

@@ -8,6 +8,7 @@ from app.schemas.auth import UserProfile
 from app.schemas.chat import ConversationCreate, ConversationDetail, MessageCreate, MessageRecord
 from app.schemas.retrieval import RetrievalRequest
 from app.services.retrieval.service import retrieval_service
+from app.services.settings_service import settings_service
 
 
 class ChatService:
@@ -72,9 +73,14 @@ class ChatService:
             .where(ConversationMessage.conversation_id == conversation_id, ConversationMessage.role == "user")
             .order_by(ConversationMessage.created_at.desc())
         )
+        strategy = settings_service.get_retrieval_strategy()
         retrieval = retrieval_service.search(
             db,
-            RetrievalRequest(space_id=conversation.space_id, query=latest_message.content if latest_message else "", top_k=3),
+            RetrievalRequest(
+                space_id=conversation.space_id,
+                query=latest_message.content if latest_message else "",
+                top_k=strategy.top_k,
+            ),
             conversation.user_id,
         )
 
@@ -93,16 +99,24 @@ class ChatService:
 
         if retrieval.chunks:
             head = retrieval.chunks[0]
+            citation_hint = "本次回答已附带引用来源，适合企业内部 SOP、FAQ 与政策问答场景。"
+            if not strategy.citation_required:
+                citation_hint = "当前策略允许摘要式回答，但系统仍保留了候选片段，便于人工复核。"
             answer = (
-                f"当前问题已命中 {len(retrieval.chunks)} 条上下文，"
-                f"本次检索模式为 {retrieval.retrieval_mode}。"
+                f"已从当前知识空间检索到 {len(retrieval.chunks)} 条高相关片段，"
+                f"检索模式为 {retrieval.retrieval_mode}。"
                 f"优先参考文档《{head.document_name}》"
-                f"{f' 的 {head.section_path}' if head.section_path else ''}，"
-                f"上传者为 {head.created_by_name or head.created_by_username or '未知用户'}。"
-                f"片段摘要：{head.content_preview}"
+                f"{f' 的 {head.section_path}' if head.section_path else ''}。"
+                f"该片段上传人是 {head.created_by_name or head.created_by_username or '未知成员'}。"
+                f"关键内容摘要：{head.content_preview}。"
+                f"{citation_hint}"
             )
         else:
-            answer = "当前空间下没有命中可用片段，请先上传并解析 PDF 或 DOCX，或检查当前空间与文档可见范围。"
+            answer = (
+                "当前知识空间下没有命中可用片段。"
+                "请先上传并解析 PDF 或 DOCX 文档，"
+                "或检查当前空间、文档可见范围与检索策略是否配置正确。"
+            )
 
         return [
             {"type": "token", "delta": answer},

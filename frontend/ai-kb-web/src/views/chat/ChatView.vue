@@ -12,6 +12,12 @@ const streamText = ref("");
 const citations = ref([]);
 const retrieving = ref(false);
 
+const sampleQuestions = [
+  "客户咨询操作流程时，应该优先参考哪份 SOP？",
+  "当前文档里有没有关于权限或审批边界的说明？",
+  "帮我找一下实施交付前需要检查哪些事项。",
+];
+
 const retrievalSummary = computed(() => {
   const result = workspaceStore.retrievalResult;
   if (!result) return null;
@@ -27,20 +33,20 @@ onMounted(async () => {
 });
 
 function uploaderLabel(item) {
-  const display = item.created_by_name || item.created_by_username || "未知上传者";
+  const display = item.created_by_name || item.created_by_username || "未知上传人";
   if (item.created_by_username && item.created_by_name) return `${display} / ${item.created_by_username}`;
   return display;
 }
 
 function visibilityLabel(scope) {
-  return scope === "PRIVATE" ? "仅自己可见" : "空间可见";
+  return scope === "PRIVATE" ? "仅自己可见" : "空间共享";
 }
 
 async function createNewConversation() {
   if (!workspaceStore.activeSpaceId) return;
   const { data } = await createConversation({
     space_id: workspaceStore.activeSpaceId,
-    title: `会话 ${new Date().toLocaleString()}`,
+    title: `业务问答 ${new Date().toLocaleString()}`,
   });
   activeConversationId.value = data.id;
   await workspaceStore.loadConversations();
@@ -54,12 +60,16 @@ async function openConversation(conversationId) {
   await workspaceStore.loadMessages(conversationId);
 }
 
+function useSample(question) {
+  draft.value = question;
+}
+
 async function submit() {
   if (!draft.value || !activeConversationId.value) return;
   retrieving.value = true;
-  await sendMessage(activeConversationId.value, { content: draft.value });
-  await workspaceStore.loadMessages(activeConversationId.value);
   const content = draft.value;
+  await sendMessage(activeConversationId.value, { content });
+  await workspaceStore.loadMessages(activeConversationId.value);
   await workspaceStore.runRetrieval(content);
   draft.value = "";
   streamText.value = "";
@@ -81,7 +91,7 @@ async function submit() {
   source.onerror = () => {
     retrieving.value = false;
     source.close();
-    ElMessage.warning("流式回答已结束。");
+    ElMessage.warning("流式回答已结束或连接中断");
   };
 }
 </script>
@@ -92,8 +102,10 @@ async function submit() {
       <div class="page-title">
         <div>
           <span class="page-eyebrow">Retrieval QA</span>
-          <h2>检索问答</h2>
-          <p class="page-subtitle">基于当前知识空间发起问答，查看会话、检索命中片段与引用来源。</p>
+          <h2>可追溯的企业知识问答</h2>
+          <p class="page-subtitle">
+            问答过程会先检索当前知识空间的文档切片，再展示引用来源，适合企业内部客服、售前、交付和制度查询场景。
+          </p>
         </div>
       </div>
     </section>
@@ -103,7 +115,7 @@ async function submit() {
         <div class="table-header table-header--tight">
           <div>
             <h3>会话列表</h3>
-            <p>管理当前空间下的历史问答会话。</p>
+            <p>按知识空间管理业务问答记录。</p>
           </div>
           <el-button type="primary" plain @click="createNewConversation">新建会话</el-button>
         </div>
@@ -114,6 +126,7 @@ async function submit() {
             :key="conversation.id"
             class="conversation-item"
             :class="{ 'conversation-item--active': activeConversationId === conversation.id }"
+            type="button"
             @click="openConversation(conversation.id)"
           >
             <strong>{{ conversation.title }}</strong>
@@ -125,8 +138,8 @@ async function submit() {
       <article class="panel-card chat-panel">
         <div class="table-header table-header--tight">
           <div>
-            <h3>问答区</h3>
-            <p>发起问题并查看实时流式回答。</p>
+            <h3>问答工作区</h3>
+            <p>先召回上下文，再以流式方式展示回答和引用。</p>
           </div>
         </div>
 
@@ -135,6 +148,12 @@ async function submit() {
             已命中 {{ retrievalSummary.count }} 条片段，当前检索模式：{{ retrievalSummary.mode }}
           </template>
         </el-alert>
+
+        <div class="sample-list">
+          <button v-for="question in sampleQuestions" :key="question" type="button" @click="useSample(question)">
+            {{ question }}
+          </button>
+        </div>
 
         <div class="message-list">
           <article v-for="message in workspaceStore.messages" :key="message.id" class="message-item">
@@ -148,9 +167,9 @@ async function submit() {
         </div>
 
         <div class="composer">
-          <el-input v-model="draft" type="textarea" :rows="4" placeholder="基于当前空间发起提问" />
+          <el-input v-model="draft" type="textarea" :rows="4" placeholder="基于当前知识空间发起提问" />
           <el-button type="primary" :disabled="!activeConversationId" :loading="retrieving" @click="submit">
-            发送
+            发送并检索
           </el-button>
         </div>
       </article>
@@ -159,7 +178,7 @@ async function submit() {
         <div class="table-header table-header--tight">
           <div>
             <h3>引用来源</h3>
-            <p>展示检索命中片段与最终回答引用内容。</p>
+            <p>展示命中文档、页码、上传人和片段摘要。</p>
           </div>
         </div>
 
@@ -171,9 +190,9 @@ async function submit() {
           >
             <div class="citation-title">{{ item.document_name }}</div>
             <div class="citation-meta">
-              <span>上传者：{{ uploaderLabel(item) }}</span>
+              <span>上传人：{{ uploaderLabel(item) }}</span>
               <span>可见范围：{{ visibilityLabel(item.visibility_scope) }}</span>
-              <span>分段：{{ item.section_path || "-" }}</span>
+              <span>章节：{{ item.section_path || "-" }}</span>
               <span>页码：{{ item.page_no || "-" }}</span>
               <span>score：{{ Number(item.score).toFixed(3) }}</span>
             </div>
@@ -182,16 +201,16 @@ async function submit() {
         </div>
 
         <div v-if="citations.length === 0" class="placeholder-copy">
-          发起一次流式问答后，这里会显示文档、上传者、可见范围和引用摘要。
+          发起一次问答后，这里会展示回答引用的文档来源，帮助业务人员判断答案是否可信。
         </div>
 
         <div v-else class="citation-list">
           <article v-for="item in citations" :key="`${item.document_name}-${item.page_no}-${item.section_path}`" class="citation-item">
             <div class="citation-title">{{ item.document_name }}</div>
             <div class="citation-meta">
-              <span>上传者：{{ uploaderLabel(item) }}</span>
+              <span>上传人：{{ uploaderLabel(item) }}</span>
               <span>可见范围：{{ visibilityLabel(item.visibility_scope) }}</span>
-              <span>分段：{{ item.section_path || "-" }}</span>
+              <span>章节：{{ item.section_path || "-" }}</span>
               <span>页码：{{ item.page_no || "-" }}</span>
             </div>
             <div>{{ item.snippet }}</div>
@@ -205,14 +224,14 @@ async function submit() {
 <style scoped>
 .chat-grid {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) 340px;
+  grid-template-columns: 280px minmax(0, 1fr) 360px;
   gap: var(--space-4);
 }
 
 .conversation-panel,
 .chat-panel,
 .citation-panel {
-  min-height: 620px;
+  min-height: 0;
 }
 
 .table-header {
@@ -229,7 +248,7 @@ async function submit() {
 
 .table-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .table-header p {
@@ -239,10 +258,26 @@ async function submit() {
 }
 
 .conversation-list,
-.citation-list {
+.citation-list,
+.message-list,
+.sample-list {
   display: grid;
   gap: var(--space-3);
   margin-top: var(--space-4);
+}
+
+.sample-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sample-list button {
+  padding: 8px 10px;
+  border: 1px solid var(--line-color);
+  border-radius: var(--radius-sm);
+  background: rgba(248, 250, 252, 0.9);
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
 }
 
 .conversation-item,
@@ -250,7 +285,7 @@ async function submit() {
 .message-item {
   width: 100%;
   text-align: left;
-  padding: 14px;
+  padding: 10px 12px;
   border: 1px solid var(--line-color);
   border-radius: var(--radius-md);
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.94));
@@ -268,19 +303,13 @@ async function submit() {
 }
 
 .conversation-item span {
-  margin-top: 8px;
+  margin-top: 6px;
   color: var(--text-muted);
   font-size: 12px;
 }
 
-.message-list {
-  display: grid;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
-}
-
 .message-item {
-  line-height: 1.75;
+  line-height: 1.6;
 }
 
 .message-item strong {
@@ -327,6 +356,12 @@ async function submit() {
   .chat-panel,
   .citation-panel {
     min-height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .sample-list {
+    grid-template-columns: 1fr;
   }
 }
 </style>

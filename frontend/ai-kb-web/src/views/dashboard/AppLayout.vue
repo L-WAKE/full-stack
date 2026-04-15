@@ -12,38 +12,38 @@ const workspaceStore = useWorkspaceStore();
 const isSidebarCollapsed = ref(false);
 
 const menuItems = [
-  { path: "/dashboard", label: "总览" },
-  { path: "/spaces", label: "知识库空间" },
-  { path: "/documents", label: "文档中心" },
-  { path: "/chat", label: "检索问答" },
-  { path: "/settings", label: "模型设置" },
+  { path: "/dashboard", label: "总览", desc: "业务运营看板" },
+  { path: "/spaces", label: "知识空间", desc: "业务域与权限边界" },
+  { path: "/documents", label: "文档治理", desc: "上传、解析、切片、审计" },
+  { path: "/chat", label: "检索问答", desc: "会话与引用来源" },
+  { path: "/settings", label: "模型策略", desc: "模型与检索配置" },
 ];
 
 const routeMetaMap = {
   dashboard: {
-    parent: "控制台",
-    title: "总览",
-    subtitle: "围绕空间、文档、会话和检索链路构建统一 AI 知识库后台。",
+    parent: "Enterprise AI",
+    title: "企业知识助手控制台",
+    subtitle: "围绕知识入库、检索质量、权限治理和问答使用情况统一管理企业级知识库系统。",
   },
   spaces: {
-    parent: "知识运营",
-    title: "知识库空间",
-    subtitle: "统一管理业务知识空间、成员角色与协作权限边界。",
+    parent: "Knowledge Ops",
+    title: "知识空间与场景设计",
+    subtitle: "按业务域沉淀 SOP、产品 FAQ、客户支持手册、实施交付文档等企业核心知识资产。",
   },
   documents: {
-    parent: "知识运营",
-    title: "文档中心",
-    subtitle: "管理上传、解析、切片、可见范围和文档入库状态。",
+    parent: "Knowledge Ops",
+    title: "文档治理中心",
+    subtitle: "统一管理企业文档上传、解析状态、切片质量、可见范围和入库健康度。",
   },
   chat: {
-    parent: "智能检索",
-    title: "检索问答",
-    subtitle: "基于当前空间发起问答，查看命中片段和引用来源。",
+    parent: "Retrieval QA",
+    title: "检索问答与引用追踪",
+    subtitle: "面向运营、售前、客服和交付团队提供可追溯的知识问答能力。",
   },
   settings: {
-    parent: "系统配置",
-    title: "模型设置",
-    subtitle: "预留 Chat、Embedding、Rerank 等模型配置和供应商接入边界。",
+    parent: "AI Strategy",
+    title: "模型与检索策略",
+    subtitle: "集中配置聊天模型、Embedding 方案和 RAG 检索参数，为生产化扩展预留能力。",
   },
 };
 
@@ -54,6 +54,11 @@ const currentSpaceRole = computed(() => {
   const current = members.find((item) => item.user_id === authStore.profile?.id);
   return current?.role || "-";
 });
+const activeSpaceSummary = computed(() => {
+  const current = workspaceStore.spaces.find((item) => item.id === workspaceStore.activeSpaceId);
+  if (!current) return "未选择知识空间";
+  return `${current.name} · ${current.document_count} docs · ${current.member_count} members`;
+});
 
 onMounted(async () => {
   if (!authStore.profile) {
@@ -61,12 +66,15 @@ onMounted(async () => {
   }
   await workspaceStore.loadOverview();
   await workspaceStore.loadSpaces();
+  await workspaceStore.loadRecentActivity();
 });
 
-function handleSpaceChange() {
-  workspaceStore.loadActiveSpaceDetail();
-  workspaceStore.loadDocuments();
-  workspaceStore.loadConversations();
+async function handleSpaceChange() {
+  await workspaceStore.loadActiveSpaceDetail();
+  await Promise.all([
+    workspaceStore.loadDocuments(),
+    workspaceStore.loadConversations(),
+  ]);
 }
 
 function toggleSidebar() {
@@ -83,51 +91,42 @@ function logout() {
   <div class="console-shell" :class="{ 'console-shell--collapsed': isSidebarCollapsed }">
     <header class="console-header">
       <div class="console-header__brand">
-        <div class="header-logo">AI</div>
-        <div class="header-title">AI 知识库系统</div>
-        <span class="header-divider"></span>
-        <div class="header-home">控制台</div>
+        <div class="header-logo">KA</div>
+        <div>
+          <div class="header-title">Enterprise Knowledge Assistant</div>
+          <div class="header-subtitle">{{ activeSpaceSummary }}</div>
+        </div>
       </div>
 
       <div class="console-header__actions">
-        <button class="header-meta" type="button">
-          <span class="header-meta__dot"></span>
-          <span class="header-meta__label">角色</span>
-          <span class="header-meta__value">{{ authStore.profile?.role || "管理员" }}</span>
-        </button>
-        <button class="header-meta" type="button">
-          <span class="header-meta__dot"></span>
-          <span class="header-meta__label">空间角色</span>
-          <span class="header-meta__value">{{ currentSpaceRole }}</span>
-        </button>
-        <button class="header-meta header-meta--logout" type="button" @click="logout">
-          <span class="header-meta__dot"></span>
-          <span class="header-meta__value">退出登录</span>
-        </button>
+        <div class="header-chip">
+          <span class="header-chip__label">系统角色</span>
+          <span class="header-chip__value">{{ authStore.profile?.role || "-" }}</span>
+        </div>
+        <div class="header-chip">
+          <span class="header-chip__label">空间角色</span>
+          <span class="header-chip__value">{{ currentSpaceRole }}</span>
+        </div>
+        <button class="header-logout" type="button" @click="logout">退出登录</button>
       </div>
     </header>
 
     <div class="console-body">
       <aside class="layout-sidebar">
-        <el-menu
-          :default-active="activeMenu"
-          :collapse="isSidebarCollapsed"
-          :collapse-transition="false"
-          class="sidebar-menu"
-          text-color="#c8cdd3"
-          active-text-color="#ffffff"
-          background-color="transparent"
-        >
-          <el-menu-item
+        <div class="sidebar-block">
+          <div class="sidebar-caption">Modules</div>
+          <button
             v-for="item in menuItems"
             :key="item.path"
-            :index="item.path"
+            class="sidebar-link"
+            :class="{ 'sidebar-link--active': activeMenu === item.path }"
+            type="button"
             @click="router.push(item.path)"
           >
-            <span class="menu-dot"></span>
-            <span>{{ item.label }}</span>
-          </el-menu-item>
-        </el-menu>
+            <span class="sidebar-link__title">{{ item.label }}</span>
+            <span class="sidebar-link__desc">{{ item.desc }}</span>
+          </button>
+        </div>
 
         <button
           class="sidebar-toggle"
@@ -154,7 +153,7 @@ function logout() {
             <el-select
               v-model="workspaceStore.activeSpaceId"
               class="space-switcher"
-              placeholder="选择知识库空间"
+              placeholder="选择知识空间"
               @change="handleSpaceChange"
             >
               <el-option
@@ -177,7 +176,7 @@ function logout() {
 
 <style scoped>
 .console-shell {
-  --sidebar-width: 248px;
+  --sidebar-width: 236px;
   height: 100vh;
   overflow: hidden;
   color: var(--text-main);
@@ -185,21 +184,21 @@ function logout() {
 }
 
 .console-shell--collapsed {
-  --sidebar-width: 76px;
+  --sidebar-width: 72px;
 }
 
 .console-header {
-  min-height: 64px;
+  min-height: 58px;
   display: grid;
   grid-template-columns: minmax(320px, 1fr) auto;
+  gap: var(--space-4);
   align-items: center;
-  gap: var(--space-3);
-  padding: 12px 20px;
+  padding: 10px 18px;
   color: var(--sidebar-text);
   background:
-    radial-gradient(circle at top left, rgba(61, 139, 255, 0.14), transparent 24%),
-    linear-gradient(135deg, #11161d, #18212c);
-  box-shadow: inset 0 -1px 0 var(--line-dark);
+    radial-gradient(circle at top left, rgba(95, 166, 255, 0.18), transparent 24%),
+    linear-gradient(120deg, #0f1723, #152233 60%, #112942);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .console-header__brand,
@@ -209,157 +208,147 @@ function logout() {
 }
 
 .console-header__brand {
-  gap: var(--space-3);
+  gap: 14px;
   min-width: 0;
 }
 
 .header-logo {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
-  color: var(--sidebar-bg);
-  background: linear-gradient(180deg, #f4f8ff, #dbe7ff);
-  border-radius: 14px;
-  font-size: 13px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff6d8, #ffd38a);
+  color: #111827;
   font-weight: 800;
+  letter-spacing: 0.06em;
 }
 
 .header-title {
-  color: var(--sidebar-text-strong);
-  font-size: 17px;
+  color: #f8fbff;
+  font-size: 15px;
   font-weight: 700;
 }
 
-.header-divider {
-  width: 1px;
-  height: 22px;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.header-home {
-  color: var(--sidebar-text-muted);
-  font-size: 13px;
+.header-subtitle {
+  margin-top: 2px;
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 12px;
 }
 
 .console-header__actions {
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: 10px;
 }
 
-.header-meta {
+.header-chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 38px;
-  padding: 0 14px;
-  color: var(--sidebar-text);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 13px;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.header-chip__label {
+  color: rgba(226, 232, 240, 0.65);
+  font-size: 11px;
+}
+
+.header-chip__value {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.header-logout {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
   cursor: pointer;
 }
 
-.header-meta__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #4f92ff;
-  box-shadow:
-    12px 0 0 rgba(79, 146, 255, 0.72),
-    24px 0 0 rgba(79, 146, 255, 0.45);
-  margin-right: 28px;
-}
-
-.header-meta__label {
-  color: var(--sidebar-text-muted);
-}
-
-.header-meta__value {
-  color: var(--sidebar-text-strong);
-}
-
-.header-meta--logout .header-meta__dot {
-  background: #94a3b8;
-  box-shadow:
-    12px 0 0 rgba(148, 163, 184, 0.72),
-    24px 0 0 rgba(148, 163, 184, 0.45);
-}
-
 .console-body {
-  height: calc(100vh - 64px);
+  height: calc(100vh - 58px);
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-  min-height: 0;
   transition: grid-template-columns 0.24s ease;
 }
 
 .layout-sidebar {
   position: relative;
   min-width: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 14px 12px 18px;
-  color: var(--sidebar-text);
+  padding: 14px 10px 60px;
   background:
-    radial-gradient(circle at top, rgba(61, 139, 255, 0.14), transparent 32%),
-    linear-gradient(180deg, var(--sidebar-bg), #18212c);
-  box-shadow: inset -1px 0 0 var(--line-dark);
+    radial-gradient(circle at top, rgba(61, 139, 255, 0.12), transparent 30%),
+    linear-gradient(180deg, #11161d, #18212c);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.06);
 }
 
-.sidebar-menu {
-  flex: 1;
-  min-height: 0;
-  padding: 8px 0 64px;
-  border-right: none;
+.sidebar-block {
+  display: grid;
+  gap: 8px;
+}
+
+.sidebar-caption {
+  margin-bottom: 4px;
+  padding: 0 8px;
+  color: rgba(226, 232, 240, 0.55);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sidebar-link {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  color: rgba(236, 242, 249, 0.86);
   background: transparent;
+  cursor: pointer;
+  transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
 }
 
-.layout-sidebar :deep(.el-menu-item) {
-  height: 42px;
-  margin: 0 0 6px;
-  border-radius: 12px;
-  font-size: 14px;
-  transition:
-    background-color 0.18s ease,
-    color 0.18s ease,
-    transform 0.18s ease;
-}
-
-.layout-sidebar :deep(.el-menu-item.is-active) {
-  background: var(--sidebar-active);
-  color: var(--sidebar-text-strong);
-  box-shadow: 0 14px 26px rgba(23, 104, 255, 0.2);
-}
-
-.layout-sidebar :deep(.el-menu-item:hover) {
-  background: var(--sidebar-hover);
+.sidebar-link:hover {
   transform: translateX(2px);
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.menu-dot {
-  width: 6px;
-  height: 6px;
-  margin-right: 10px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.7;
+.sidebar-link--active {
+  border-color: rgba(105, 174, 255, 0.28);
+  background: linear-gradient(135deg, rgba(23, 104, 255, 0.3), rgba(61, 139, 255, 0.18));
+  box-shadow: 0 16px 28px rgba(23, 104, 255, 0.18);
 }
 
-.console-shell--collapsed :deep(.el-menu--collapse) {
-  width: 52px;
+.sidebar-link__title {
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.console-shell--collapsed :deep(.el-menu--collapse > .el-menu-item) {
-  justify-content: center;
-  padding: 0 !important;
+.sidebar-link__desc {
+  color: rgba(226, 232, 240, 0.6);
+  font-size: 11px;
+  line-height: 1.4;
 }
 
-.console-shell--collapsed .menu-dot {
-  margin-right: 0;
+.console-shell--collapsed .sidebar-caption,
+.console-shell--collapsed .sidebar-link__desc {
+  display: none;
+}
+
+.console-shell--collapsed .sidebar-link {
+  padding: 12px 10px;
+  place-items: center;
 }
 
 .sidebar-toggle {
@@ -367,13 +356,11 @@ function logout() {
   left: 50%;
   bottom: 18px;
   transform: translateX(-50%);
-  width: 34px;
-  height: 48px;
-  display: grid;
-  place-items: center;
-  color: var(--sidebar-text);
+  width: 30px;
+  height: 38px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-pill);
+  border-radius: 999px;
+  color: rgba(236, 242, 249, 0.86);
   background: rgba(255, 255, 255, 0.06);
   cursor: pointer;
 }
@@ -387,17 +374,17 @@ function logout() {
 }
 
 .page-header {
-  padding: 22px 24px 14px;
+  padding: 14px 16px 10px;
 }
 
 .page-header__breadcrumb {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 8px;
   color: var(--primary);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -405,33 +392,33 @@ function logout() {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: 12px;
 }
 
 .page-header h1 {
-  margin: 12px 0 10px;
-  font-size: 30px;
-  line-height: 1.08;
-  letter-spacing: -0.04em;
+  margin: 8px 0 6px;
+  font-size: 22px;
+  line-height: 1.04;
+  letter-spacing: -0.05em;
 }
 
 .page-header p {
   max-width: 760px;
   margin: 0;
   color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .space-switcher {
-  width: 280px;
-  margin-top: 10px;
+  width: 248px;
+  margin-top: 4px;
 }
 
 .layout-content {
   flex: 1;
   min-height: 0;
-  padding: 0 24px 24px;
+  padding: 0 16px 16px;
   overflow: auto;
 }
 
@@ -455,7 +442,7 @@ function logout() {
   }
 
   .page-header {
-    padding: 18px 16px 12px;
+    padding: 14px 12px 10px;
   }
 
   .page-header__row {
@@ -463,7 +450,7 @@ function logout() {
   }
 
   .page-header h1 {
-    font-size: 24px;
+    font-size: 20px;
   }
 
   .space-switcher {
@@ -471,7 +458,7 @@ function logout() {
   }
 
   .layout-content {
-    padding: 0 16px 16px;
+    padding: 0 12px 12px;
   }
 }
 </style>

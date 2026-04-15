@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     upload_dir: str = "./storage/uploads"
     default_chat_model: str = "gpt-4.1-mini"
     default_embedding_model: str = "text-embedding-3-large"
+    llm_api_key: str = ""
+    llm_base_url: str = "https://api.openai.com/v1"
+    llm_model: str = "gpt-4.1-mini"
+    llm_temperature: float = 0.2
+    llm_timeout_seconds: float = 30.0
     qdrant_collection: str = "ai_kb_chunks"
     embedding_dimension: int = 128
     qdrant_local_path: str = "./storage/qdrant-local"

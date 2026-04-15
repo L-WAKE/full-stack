@@ -13,5 +13,13 @@ router = APIRouter()
 def overview(
     current_user: UserProfile = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> dict[str, int]:
+) -> dict[str, int | str | float]:
     return statistics_service.overview(db, current_user.id)
+
+
+@router.get("/recent-activity")
+def recent_activity(
+    current_user: UserProfile = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict[str, list[dict]]:
+    return statistics_service.recent_activity(db, current_user.id)

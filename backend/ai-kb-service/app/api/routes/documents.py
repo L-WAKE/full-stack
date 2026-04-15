@@ -27,9 +27,19 @@ async def upload_document(
     current_user: UserProfile = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> DocumentDetail:
+    file_name = file.filename or ""
+    extension = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
+    if extension not in {"pdf", "docx"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="当前仅支持 PDF / DOCX 文件，DOC、XLSX、XLS 请先另存为 PDF 或 DOCX 后上传。",
+        )
+    if visibility_scope not in {"SPACE", "PRIVATE"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid visibility scope")
+
     document = await document_service.upload_document(db, space_id, file, visibility_scope, current_user)
     if not document:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Upload failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Upload failed. Please check space access.")
     return document
 
 
