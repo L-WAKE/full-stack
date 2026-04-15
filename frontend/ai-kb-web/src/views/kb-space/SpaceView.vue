@@ -27,12 +27,8 @@ const currentRole = computed(() => {
 const canManageMembers = computed(() => authStore.profile?.role === "admin" || currentRole.value === "owner");
 
 function memberActionReason(row) {
-  if (canManageMembers.value && row.user_id !== authStore.profile?.id) {
-    return "";
-  }
-  if (!canManageMembers.value) {
-    return "只有当前空间 owner 或系统 admin 可以调整成员角色。";
-  }
+  if (canManageMembers.value && row.user_id !== authStore.profile?.id) return "";
+  if (!canManageMembers.value) return "只有当前空间 owner 或系统 admin 可以调整成员角色。";
   return "暂不支持修改或移除自己，请由其他 owner 操作。";
 }
 
@@ -65,10 +61,7 @@ async function assignMembers() {
     return;
   }
 
-  await workspaceStore.addSpaceMembers({
-    user_ids: ids,
-    role: memberForm.role,
-  });
+  await workspaceStore.addSpaceMembers({ user_ids: ids, role: memberForm.role });
   memberForm.userIds = "";
   ElMessage.success("空间成员已更新。");
 }
@@ -84,9 +77,7 @@ async function changeRole(row, role) {
 
 async function removeMember(row) {
   try {
-    await ElMessageBox.confirm(`确认移除成员 ${row.display_name} 吗？`, "移除确认", {
-      type: "warning",
-    });
+    await ElMessageBox.confirm(`确认移除成员 ${row.display_name} 吗？`, "移除确认", { type: "warning" });
     await workspaceStore.deleteMember(row.user_id);
     ElMessage.success("成员已移除。");
   } catch (error) {
@@ -98,50 +89,72 @@ async function removeMember(row) {
 </script>
 
 <template>
-  <div class="content-grid">
-    <el-card shadow="never">
-      <div class="card-title">创建知识库空间</div>
-      <el-form label-position="top">
-        <el-form-item label="空间名称">
-          <el-input v-model="createForm.name" placeholder="例如：租赁业务知识库" />
-        </el-form-item>
-        <el-form-item label="空间说明">
-          <el-input v-model="createForm.description" type="textarea" :rows="4" />
-        </el-form-item>
-        <el-button type="primary" @click="createNewSpace">新建空间</el-button>
-      </el-form>
-    </el-card>
-
-    <el-card shadow="never">
-      <div class="card-title">空间列表</div>
-      <el-table :data="workspaceStore.spaces" style="width: 100%">
-        <el-table-column prop="name" label="空间" />
-        <el-table-column prop="description" label="描述" />
-        <el-table-column prop="document_count" label="文档数" width="100" />
-        <el-table-column prop="member_count" label="成员数" width="100" />
-        <el-table-column label="操作" width="120">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="refreshCurrentSpace(row.id)">查看成员</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
-
-    <el-card shadow="never" class="member-card">
-      <div class="member-header">
+  <div class="page-shell page-shell--table">
+    <section class="page-toolbar">
+      <div class="page-title">
         <div>
-          <div class="card-title">成员角色管理</div>
-          <div class="member-subtitle">当前空间角色：{{ currentRole || "-" }}</div>
+          <span class="page-eyebrow">Knowledge Spaces</span>
+          <h2>空间管理</h2>
+          <p class="page-subtitle">用于管理知识空间、成员角色与协作权限，让文档与问答建立清晰边界。</p>
         </div>
-        <el-tag v-if="currentRole" type="info">{{ currentRole }}</el-tag>
+      </div>
+    </section>
+
+    <section class="space-grid">
+      <article class="panel-card">
+        <div class="page-title">
+          <div>
+            <span class="page-eyebrow">Create</span>
+            <h2>创建空间</h2>
+          </div>
+        </div>
+        <el-form label-position="top" class="panel-form">
+          <el-form-item label="空间名称">
+            <el-input v-model="createForm.name" placeholder="例如：租赁业务知识库" />
+          </el-form-item>
+          <el-form-item label="空间说明">
+            <el-input v-model="createForm.description" type="textarea" :rows="4" />
+          </el-form-item>
+          <el-button type="primary" @click="createNewSpace">新建空间</el-button>
+        </el-form>
+      </article>
+
+      <article class="table-card">
+        <div class="table-header">
+          <div>
+            <h3>空间列表</h3>
+            <p>查看当前空间的文档与成员规模。</p>
+          </div>
+        </div>
+        <el-table :data="workspaceStore.spaces" style="width: 100%">
+          <el-table-column prop="name" label="空间" min-width="180" />
+          <el-table-column prop="description" label="描述" min-width="220" />
+          <el-table-column prop="document_count" label="文档数" width="100" />
+          <el-table-column prop="member_count" label="成员数" width="100" />
+          <el-table-column label="操作" width="120">
+            <template #default="{ row }">
+              <el-button link type="primary" @click="refreshCurrentSpace(row.id)">查看成员</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </article>
+    </section>
+
+    <article class="table-card">
+      <div class="table-header">
+        <div>
+          <h3>成员角色管理</h3>
+          <p>当前空间角色：{{ currentRole || "-" }}</p>
+        </div>
+        <span v-if="currentRole" class="status-chip">{{ currentRole }}</span>
       </div>
 
       <el-empty v-if="!workspaceStore.activeSpaceDetail" description="请选择一个空间查看成员" />
 
       <template v-else>
-        <el-table :data="workspaceStore.activeSpaceDetail.members" style="width: 100%; margin-bottom: 18px">
-          <el-table-column prop="display_name" label="成员" />
-          <el-table-column prop="username" label="账号" />
+        <el-table :data="workspaceStore.activeSpaceDetail.members" style="width: 100%">
+          <el-table-column prop="display_name" label="成员" min-width="160" />
+          <el-table-column prop="username" label="账号" min-width="140" />
           <el-table-column prop="role" label="空间角色" width="220">
             <template #default="{ row }">
               <el-tooltip
@@ -186,52 +199,74 @@ async function removeMember(row) {
           </el-table-column>
         </el-table>
 
-        <el-form v-if="canManageMembers" inline>
-          <el-form-item label="用户 ID">
-            <el-input v-model="memberForm.userIds" placeholder="例如 2,3" style="width: 180px" />
-          </el-form-item>
-          <el-form-item label="角色">
-            <el-select v-model="memberForm.role" style="width: 140px">
-              <el-option label="member" value="member" />
-              <el-option label="owner" value="owner" />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="assignMembers">分配成员角色</el-button>
-          </el-form-item>
-        </el-form>
+        <div class="member-actions">
+          <el-form v-if="canManageMembers" class="member-form">
+            <el-form-item label="用户 ID">
+              <el-input v-model="memberForm.userIds" placeholder="例如 2,3" />
+            </el-form-item>
+            <el-form-item label="角色">
+              <el-select v-model="memberForm.role">
+                <el-option label="member" value="member" />
+                <el-option label="owner" value="owner" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="assignMembers">分配成员角色</el-button>
+            </el-form-item>
+          </el-form>
 
-        <el-alert
-          v-else
-          type="info"
-          :closable="false"
-          title="只有当前空间 owner 或系统 admin 可以调整成员角色。"
-        />
+          <el-alert
+            v-else
+            type="info"
+            :closable="false"
+            title="只有当前空间 owner 或系统 admin 可以调整成员角色。"
+          />
+        </div>
       </template>
-    </el-card>
+    </article>
   </div>
 </template>
 
 <style scoped>
-.content-grid {
+.space-grid {
   display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 18px;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: var(--space-4);
 }
 
-.member-card {
-  grid-column: 1 / -1;
+.panel-form,
+.member-form {
+  display: grid;
+  gap: var(--space-3);
 }
 
-.member-header {
+.table-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-5) var(--space-5) var(--space-3);
 }
 
-.member-subtitle {
-  margin-top: 6px;
-  color: #5f6f8a;
+.table-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.table-header p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.member-actions {
+  padding: var(--space-4) var(--space-5) var(--space-5);
+}
+
+@media (max-width: 1100px) {
+  .space-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
