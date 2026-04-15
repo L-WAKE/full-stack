@@ -8,6 +8,14 @@ const trend = ref(null)
 const chartRef = ref(null)
 let chartInstance = null
 
+function getThemeColor(name, fallback) {
+  if (typeof window === 'undefined') {
+    return fallback
+  }
+
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+}
+
 const pendingOrders = computed(
   () => (overview.value.pendingMaintenanceCount || 0) + (overview.value.pendingCleaningCount || 0)
 )
@@ -81,6 +89,11 @@ function renderChart() {
     return
   }
 
+  const primary = getThemeColor('--primary', '#1768ff')
+  const success = getThemeColor('--success', '#0f9f6e')
+  const textMuted = getThemeColor('--text-muted', '#70819b')
+  const lineColor = getThemeColor('--line-color', '#dbe4f0')
+
   chartInstance = chartInstance || echarts.init(chartRef.value)
   chartInstance.setOption({
     backgroundColor: 'transparent',
@@ -98,7 +111,7 @@ function renderChart() {
       itemWidth: 10,
       itemHeight: 10,
       textStyle: {
-        color: '#64748b'
+        color: textMuted
       },
       data: ['出租率', '新增工单']
     },
@@ -115,11 +128,11 @@ function renderChart() {
       axisTick: { show: false },
       axisLine: {
         lineStyle: {
-          color: 'rgba(148, 163, 184, 0.28)'
+          color: lineColor
         }
       },
       axisLabel: {
-        color: '#94a3b8'
+        color: textMuted
       },
       data: trend.value.labels
     },
@@ -128,12 +141,12 @@ function renderChart() {
         type: 'value',
         name: '出租率',
         axisLabel: {
-          color: '#94a3b8',
+          color: textMuted,
           formatter: '{value}%'
         },
         splitLine: {
           lineStyle: {
-            color: 'rgba(148, 163, 184, 0.14)'
+            color: lineColor
           }
         }
       },
@@ -141,7 +154,7 @@ function renderChart() {
         type: 'value',
         name: '工单',
         axisLabel: {
-          color: '#94a3b8'
+          color: textMuted
         },
         splitLine: {
           show: false
@@ -159,17 +172,17 @@ function renderChart() {
         data: trend.value.occupancyRates,
         lineStyle: {
           width: 3,
-          color: '#2563eb'
+          color: primary
         },
         itemStyle: {
-          color: '#2563eb',
+          color: primary,
           borderColor: '#ffffff',
           borderWidth: 2
         },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(37, 99, 235, 0.24)' },
-            { offset: 1, color: 'rgba(37, 99, 235, 0.02)' }
+            { offset: 0, color: 'rgba(23, 104, 255, 0.24)' },
+            { offset: 1, color: 'rgba(23, 104, 255, 0.03)' }
           ])
         }
       },
@@ -182,8 +195,8 @@ function renderChart() {
         itemStyle: {
           borderRadius: [10, 10, 3, 3],
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#34d399' },
-            { offset: 1, color: '#059669' }
+            { offset: 0, color: '#44c993' },
+            { offset: 1, color: success }
           ])
         }
       }
@@ -301,20 +314,21 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .dashboard-shell {
   grid-template-rows: auto auto minmax(0, 1fr);
-  gap: 18px;
+  gap: var(--space-4);
 }
 
 .dashboard-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.85fr);
-  gap: 18px;
-  padding: 28px;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  gap: var(--space-4);
+  padding: var(--space-7);
+  border: 1px solid var(--line-color);
+  border-radius: var(--radius-lg);
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.16), transparent 26%),
-    radial-gradient(circle at 86% 16%, rgba(52, 211, 153, 0.12), transparent 20%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
-  box-shadow: 0 20px 55px rgba(15, 23, 42, 0.06);
+    radial-gradient(circle at top left, rgba(23, 104, 255, 0.16), transparent 26%),
+    radial-gradient(circle at 86% 16%, rgba(15, 159, 110, 0.12), transparent 20%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.98));
+  box-shadow: var(--shadow-panel);
 }
 
 .dashboard-hero__main {
@@ -325,9 +339,9 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   padding: 6px 12px;
-  color: #1d4ed8;
-  border-radius: 999px;
-  background: rgba(37, 99, 235, 0.10);
+  color: var(--primary);
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -337,16 +351,16 @@ onBeforeUnmount(() => {
 .dashboard-hero h2 {
   max-width: 760px;
   margin: 18px 0 12px;
-  color: #0f172a;
+  color: var(--text-main);
   font-size: clamp(34px, 4vw, 52px);
-  line-height: 0.98;
+  line-height: 1.02;
   letter-spacing: -0.05em;
 }
 
 .dashboard-hero p {
   max-width: 700px;
   margin: 0;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 15px;
   line-height: 1.8;
 }
@@ -354,26 +368,28 @@ onBeforeUnmount(() => {
 .dashboard-hero__stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: var(--space-3);
   margin-top: 26px;
 }
 
 .hero-stat-card {
   padding: 18px 20px;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(23, 104, 255, 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(10px);
 }
 
 .hero-stat-card span {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
 .hero-stat-card strong {
   display: block;
   margin-top: 10px;
-  color: #0f172a;
+  color: var(--text-main);
   font-size: 28px;
   letter-spacing: -0.03em;
 }
@@ -383,11 +399,12 @@ onBeforeUnmount(() => {
   flex-direction: column;
   justify-content: space-between;
   padding: 22px;
-  color: #f8fafc;
+  border-radius: var(--radius-lg);
+  color: var(--text-inverse);
   background:
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.46), transparent 30%),
-    linear-gradient(180deg, #0f172a, #111827 65%, #162033);
-  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.16);
+    radial-gradient(circle at top right, rgba(79, 146, 255, 0.42), transparent 30%),
+    linear-gradient(180deg, #162033, #11161d 65%, #16283f);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
 }
 
 .hero-aside__label {
@@ -414,14 +431,15 @@ onBeforeUnmount(() => {
 .hero-aside__trend {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
   margin-top: 26px;
 }
 
 .hero-aside__trend-item {
   padding: 14px;
-  background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .hero-aside__trend-item span {
@@ -438,16 +456,17 @@ onBeforeUnmount(() => {
 .dashboard-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: var(--space-3);
 }
 
 .dashboard-metric-card {
   position: relative;
   overflow: hidden;
   padding: 20px;
-  border: 1px solid rgba(226, 232, 240, 0.86);
+  border: 1px solid var(--line-color);
+  border-radius: var(--radius-lg);
   background: linear-gradient(180deg, #ffffff, #f8fbff);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-card);
 }
 
 .dashboard-metric-card::after {
@@ -458,18 +477,18 @@ onBeforeUnmount(() => {
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.15), transparent 68%);
+  background: radial-gradient(circle, rgba(23, 104, 255, 0.15), transparent 68%);
 }
 
 .dashboard-metric-card--success::after {
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.16), transparent 68%);
+  background: radial-gradient(circle, rgba(15, 159, 110, 0.16), transparent 68%);
 }
 
 .dashboard-metric-card__eyebrow,
 .dashboard-panel__eyebrow {
   display: inline-flex;
   align-items: center;
-  color: #2563eb;
+  color: var(--primary);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -478,13 +497,13 @@ onBeforeUnmount(() => {
 
 .dashboard-metric-card__label {
   margin-top: 12px;
-  color: #475569;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
 .dashboard-metric-card__value {
   margin-top: 12px;
-  color: #0f172a;
+  color: var(--text-main);
   font-size: 34px;
   font-weight: 800;
   letter-spacing: -0.05em;
@@ -494,7 +513,7 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 1;
   margin-top: 10px;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 13px;
   line-height: 1.65;
 }
@@ -502,21 +521,22 @@ onBeforeUnmount(() => {
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.95fr);
-  gap: 18px;
+  gap: var(--space-4);
   min-height: 0;
 }
 
 .dashboard-panel {
   min-height: 0;
   padding: 22px;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  border: 1px solid var(--line-color);
+  border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .dashboard-panel__header h3 {
   margin: 10px 0 8px;
-  color: #0f172a;
+  color: var(--text-main);
   font-size: 24px;
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -524,7 +544,7 @@ onBeforeUnmount(() => {
 
 .dashboard-panel__header p {
   margin: 0;
-  color: #64748b;
+  color: var(--text-muted);
   line-height: 1.7;
 }
 
@@ -542,25 +562,26 @@ onBeforeUnmount(() => {
 
 .note-list {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
   margin-top: 18px;
 }
 
 .note-card {
   padding: 16px;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  border: 1px solid var(--line-color);
+  border-radius: var(--radius-md);
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.94));
 }
 
 .note-card__title {
-  color: #0f172a;
+  color: var(--text-main);
   font-size: 16px;
   font-weight: 700;
 }
 
 .note-card__desc {
   margin-top: 8px;
-  color: #64748b;
+  color: var(--text-muted);
   line-height: 1.7;
 }
 
@@ -579,7 +600,7 @@ onBeforeUnmount(() => {
 @media (max-width: 900px) {
   .dashboard-hero,
   .dashboard-panel {
-    padding: 18px;
+    padding: var(--space-4);
   }
 
   .dashboard-hero h2 {

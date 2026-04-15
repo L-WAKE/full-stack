@@ -123,9 +123,9 @@ onMounted(async () => {
 
     <div class="console-body">
       <aside class="layout-sidebar">
-        <div class="sidebar-product">
+        <!-- <div class="sidebar-product">
           <div class="sidebar-product__name">轻量云</div>
-        </div>
+        </div> -->
 
         <el-menu
           :default-active="route.path"
@@ -196,7 +196,7 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .console-shell {
-  --sidebar-width: 200px;
+  --sidebar-width: 248px;
   height: 100vh;
   overflow: hidden;
   color: var(--text-main);
@@ -204,19 +204,21 @@ onMounted(async () => {
 }
 
 .console-shell--collapsed {
-  --sidebar-width: 48px;
+  --sidebar-width: 76px;
 }
 
 .console-header {
-  height: 50px;
+  min-height: 64px;
   display: grid;
   grid-template-columns: minmax(320px, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  padding: 0 16px;
-  color: #d9dde3;
-  background: #171819;
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  gap: var(--space-3);
+  padding: 12px 20px;
+  color: var(--sidebar-text);
+  background:
+    radial-gradient(circle at top left, rgba(61, 139, 255, 0.14), transparent 24%),
+    linear-gradient(135deg, #11161d, #18212c);
+  box-shadow: inset 0 -1px 0 var(--line-dark);
 }
 
 .console-header__brand,
@@ -226,74 +228,83 @@ onMounted(async () => {
 }
 
 .console-header__brand {
-  gap: 10px;
+  gap: var(--space-3);
   min-width: 0;
 }
 
 .header-logo {
-  width: 30px;
-  height: 30px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
-  color: #171819;
-  background: #eef3fb;
-  border-radius: 50%;
-  font-size: 12px;
+  color: var(--sidebar-bg);
+  background: linear-gradient(180deg, #f4f8ff, #dbe7ff);
+  border-radius: 14px;
+  font-size: 13px;
   font-weight: 800;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .header-title {
-  color: #fff;
-  font-size: 16px;
+  color: var(--sidebar-text-strong);
+  font-size: 17px;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .header-divider {
   width: 1px;
-  height: 18px;
-  background: rgba(255, 255, 255, 0.14);
+  height: 22px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .header-home {
-  color: #c8cdd3;
+  color: var(--sidebar-text-muted);
   font-size: 13px;
 }
 
 .console-header__actions {
   justify-content: flex-end;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 .header-meta {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 0;
-  color: #d9dde3;
-  border: none;
-  background: transparent;
+  gap: var(--space-2);
+  min-height: 38px;
+  padding: 0 14px;
+  color: var(--sidebar-text);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.04);
   font-size: 13px;
   cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .header-meta__dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: #4f92ff;
   box-shadow:
-    12px 0 0 rgba(59, 130, 246, 0.72),
-    24px 0 0 rgba(59, 130, 246, 0.45);
+    12px 0 0 rgba(79, 146, 255, 0.72),
+    24px 0 0 rgba(79, 146, 255, 0.45);
   margin-right: 28px;
   flex: 0 0 auto;
 }
 
 .header-meta__label {
-  color: #8e969f;
+  color: var(--sidebar-text-muted);
 }
 
 .header-meta__value {
-  color: #f5f7fa;
+  color: var(--sidebar-text-strong);
 }
 
 .header-meta--logout .header-meta__dot {
@@ -303,16 +314,22 @@ onMounted(async () => {
     24px 0 0 rgba(148, 163, 184, 0.45);
 }
 
+.header-meta:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .header-meta:hover .header-meta__value {
   color: #ffffff;
 }
 
 .console-body {
-  height: calc(100vh - 50px);
+  height: calc(100vh - 64px);
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   min-height: 0;
-  transition: grid-template-columns 0.2s ease;
+  transition: grid-template-columns var(--transition-base);
 }
 
 .layout-sidebar {
@@ -321,17 +338,26 @@ onMounted(async () => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  color: #c8cdd3;
-  background: #1d1f21;
-  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.05);
+  padding: 14px 12px 18px;
+  color: var(--sidebar-text);
+  background:
+    radial-gradient(circle at top, rgba(61, 139, 255, 0.14), transparent 32%),
+    linear-gradient(180deg, var(--sidebar-bg), #18212c);
+  box-shadow: inset -1px 0 0 var(--line-dark);
   overflow: visible;
 }
 
 .sidebar-product {
-  min-height: 56px;
-  padding: 14px 16px 10px;
-  color: #fff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  color: var(--sidebar-text-strong);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
 }
 
 .sidebar-product__name {
@@ -341,19 +367,19 @@ onMounted(async () => {
 
 .sidebar-product__desc {
   margin-top: 6px;
-  color: #8b949e;
+  color: var(--sidebar-text-muted);
   font-size: 12px;
 }
 
 .console-shell--collapsed .sidebar-product {
-  padding-inline: 0;
-  text-align: center;
+  justify-content: center;
+  padding-inline: 12px;
 }
 
 .sidebar-menu {
   flex: 1;
   min-height: 0;
-  padding: 8px 0;
+  padding: 8px 0 64px;
 }
 
 .menu-icon {
@@ -362,10 +388,14 @@ onMounted(async () => {
 
 .layout-sidebar :deep(.el-menu-item),
 .layout-sidebar :deep(.el-sub-menu__title) {
-  height: 36px;
-  margin: 0;
-  border-radius: 0;
+  height: 42px;
+  margin: 0 0 6px;
+  border-radius: 12px;
   font-size: 14px;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .layout-sidebar :deep(.el-menu-item) {
@@ -373,35 +403,38 @@ onMounted(async () => {
 }
 
 .layout-sidebar :deep(.el-sub-menu .el-menu-item) {
-  height: 34px;
-  background: #171819;
+  height: 38px;
+  margin-left: 10px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .layout-sidebar :deep(.el-menu-item.is-active) {
-  background: #1464ff;
-  color: #fff;
+  background: var(--sidebar-active);
+  color: var(--sidebar-text-strong);
+  box-shadow: 0 14px 26px rgba(23, 104, 255, 0.2);
 }
 
 .layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
   background: transparent;
-  color: #c8cdd3;
+  color: var(--sidebar-text);
 }
 
 .layout-sidebar :deep(.el-menu-item:hover),
 .layout-sidebar :deep(.el-sub-menu__title:hover) {
-  background: #25282b;
+  background: var(--sidebar-hover);
+  transform: translateX(2px);
 }
 
 .layout-sidebar :deep(.el-menu-item.is-active:hover) {
-  background: #1464ff;
+  background: var(--sidebar-active);
 }
 
 .layout-sidebar :deep(.el-sub-menu.is-active > .el-sub-menu__title:hover) {
-  background: #25282b;
+  background: var(--sidebar-hover);
 }
 
 .console-shell--collapsed :deep(.el-menu--collapse) {
-  width: 48px;
+  width: 52px;
 }
 
 .console-shell--collapsed :deep(.el-menu--collapse > .el-menu-item),
@@ -418,24 +451,29 @@ onMounted(async () => {
 .sidebar-toggle {
   position: absolute;
   left: 50%;
-  bottom: 16px;
+  bottom: 18px;
   transform: translateX(-50%);
-  width: 26px;
-  height: 44px;
+  width: 34px;
+  height: 48px;
   display: grid;
   place-items: center;
-  color: #d9dde3;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-  background: #2a2d30;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  color: var(--sidebar-text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
   cursor: pointer;
   z-index: 3;
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .sidebar-toggle:hover {
   color: #fff;
-  background: #1464ff;
+  background: var(--primary);
+  transform: translateX(-50%) translateY(-1px);
 }
 
 .layout-main {
@@ -443,42 +481,48 @@ onMounted(async () => {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: #f4f6fa;
+  background: transparent;
   overflow: hidden;
 }
 
 .page-header {
-  min-height: 88px;
-  padding: 16px 20px;
-  background: #fff;
-  border-bottom: 1px solid #e5e8ef;
+  width: min(100%, var(--content-max-width));
+  margin: 0 auto;
+  padding: 22px 24px 14px;
 }
 
 .page-header__breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   color: var(--primary);
   font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .page-header h1 {
-  margin: 10px 0 8px;
-  font-size: 22px;
-  line-height: 1.15;
+  margin: 12px 0 10px;
+  font-size: 30px;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
 }
 
 .page-header p {
   margin: 0;
   color: var(--text-muted);
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.7;
+  max-width: 760px;
 }
 
 .layout-content {
   flex: 1;
   min-height: 0;
-  padding: 14px 20px 18px;
+  width: min(100%, var(--content-max-width));
+  margin: 0 auto;
+  padding: 0 24px 24px;
   overflow: auto;
 }
 
@@ -486,13 +530,10 @@ onMounted(async () => {
   .console-header {
     grid-template-columns: minmax(240px, 1fr);
     height: auto;
-    padding-top: 10px;
-    padding-bottom: 10px;
   }
 
   .console-header__actions {
     justify-content: flex-start;
-    flex-wrap: wrap;
   }
 }
 
@@ -509,25 +550,33 @@ onMounted(async () => {
     display: none;
   }
 
+  .page-header {
+    padding: 18px 16px 12px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
   .layout-content {
-    padding: 12px;
+    padding: 0 16px 16px;
   }
 }
 
 :global(.sidebar-menu-popper.el-popper) {
-  border-radius: 4px;
-  border: 1px solid #dfe3ea;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-color);
+  box-shadow: var(--shadow-panel);
 }
 
 :global(.sidebar-menu-popper .el-menu) {
   min-width: 176px;
-  padding: 4px;
+  padding: 6px;
   background: #fff;
 }
 
 :global(.sidebar-menu-popper .el-menu-item) {
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
 }
 

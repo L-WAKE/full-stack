@@ -75,26 +75,27 @@ async function submit() {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: var(--space-6);
   background:
-    radial-gradient(circle at 16% 18%, rgba(20, 100, 255, 0.16), transparent 28%),
-    radial-gradient(circle at 84% 16%, rgba(56, 189, 248, 0.14), transparent 24%),
-    linear-gradient(180deg, #f5f8fc 0%, #edf2f8 100%);
+    radial-gradient(circle at 16% 18%, rgba(23, 104, 255, 0.16), transparent 28%),
+    radial-gradient(circle at 84% 16%, rgba(15, 159, 110, 0.12), transparent 22%),
+    linear-gradient(180deg, #f7faff 0%, #eef4fb 100%);
 }
 
 .login-card {
   width: min(460px, 100%);
   padding: 34px 34px 30px;
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.10);
+  border: 1px solid var(--line-color);
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-panel);
   backdrop-filter: blur(16px);
 }
 
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-3);
 }
 
 .login-brand__mark {
@@ -102,16 +103,18 @@ async function submit() {
   height: 48px;
   display: grid;
   place-items: center;
-  color: #0f172a;
-  background: linear-gradient(180deg, #eff6ff, #dbeafe);
-  border-radius: 16px;
+  color: var(--text-main);
+  background: linear-gradient(180deg, #eff5ff, #dce8ff);
+  border-radius: var(--radius-md);
   font-size: 18px;
   font-weight: 800;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .login-brand__title {
   font-size: 20px;
   font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .login-brand__subtitle {
@@ -126,9 +129,10 @@ async function submit() {
 
 .login-copy__eyebrow {
   display: inline-block;
-  padding: 4px 10px;
+  padding: 5px 12px;
   color: var(--primary);
   background: var(--primary-soft);
+  border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 700;
 }
@@ -150,24 +154,27 @@ async function submit() {
   margin: 22px 0 20px;
   padding: 12px 14px;
   border: 1px solid var(--line-color);
+  border-radius: var(--radius-md);
   background: rgba(248, 250, 252, 0.86);
   color: var(--text-secondary);
   font-size: 13px;
+  line-height: 1.6;
 }
 
 .login-button {
   width: 100%;
-  min-height: 44px;
+  min-height: 46px;
   margin-top: 8px;
 }
 
 @media (max-width: 768px) {
   .login-shell {
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .login-card {
     padding: 26px 22px 22px;
+    border-radius: var(--radius-lg);
   }
 
   .login-copy h1 {

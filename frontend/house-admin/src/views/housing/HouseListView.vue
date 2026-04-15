@@ -274,7 +274,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .housing-toolbar {
-  padding-bottom: 10px;
+  padding-bottom: var(--space-2);
 }
 
 .housing-toolbar :deep(.page-title) {
@@ -307,7 +307,7 @@ onMounted(() => {
 }
 
 .house-table-card :deep(.el-table__header-wrapper th) {
-  background: #f7f8fa;
+  background: var(--el-fill-color-light);
 }
 
 .house-table-card :deep(.el-table__body-wrapper) {
