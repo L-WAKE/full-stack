@@ -34,6 +34,8 @@ const form = reactive({
   tenantName: ''
 })
 
+const rentalModeLabel = computed(() => rentalModeMap[props.rentalMode] || '当前')
+
 const houseMetrics = computed(() => {
   const list = page.value.list || []
   const total = page.value.total || 0
@@ -44,28 +46,20 @@ const houseMetrics = computed(() => {
     : 0
 
   return [
-    {
-      label: `${rentalModeMap[props.rentalMode] || '当前'}房源`,
-      value: total,
-      meta: '按分页结果同步后台总数'
-    },
-    {
-      label: '当前页已出租',
-      value: occupiedCount,
-      meta: '帮助快速识别出租集中度'
-    },
-    {
-      label: '当前页待出租',
-      value: vacantCount,
-      meta: '建议优先跟进空置项目'
-    },
-    {
-      label: '平均租金',
-      value: averageRent ? `¥${averageRent}` : '¥0',
-      meta: '基于当前筛选结果估算'
-    }
+    { label: `${rentalModeLabel.value}房源`, value: total, meta: '基于当前筛选结果汇总出的房源总量。' },
+    { label: '当前已出租', value: occupiedCount, meta: '帮助团队快速判断当前盘面的去化程度。' },
+    { label: '当前待出租', value: vacantCount, meta: '建议优先跟进空置项目与高潜线索。' },
+    { label: '平均租金', value: averageRent ? `¥${averageRent}` : '¥0', meta: '基于当前列表中房源租金计算得到。' }
   ]
 })
+
+function resolveStatusType(status) {
+  if (status === 'OCCUPIED') return 'success'
+  if (status === 'VACANT') return 'warning'
+  if (status === 'OFFLINE') return 'info'
+  if (status === 'RENOVATING') return 'primary'
+  return 'info'
+}
 
 async function loadData() {
   loading.value = true
@@ -103,31 +97,11 @@ function openEdit(row) {
   dialogVisible.value = true
 }
 
-function resolveStatusType(status) {
-  if (status === 'OCCUPIED') return 'success'
-  if (status === 'VACANT') return 'warning'
-  if (status === 'OFFLINE') return 'info'
-  if (status === 'RENOVATING') return 'primary'
-  return 'info'
-}
-
 async function submit() {
-  if (!form.houseName?.trim()) {
-    ElMessage.warning('请输入房源名称')
-    return
-  }
-  if (!form.projectName?.trim()) {
-    ElMessage.warning('请输入所属项目')
-    return
-  }
-  if (!form.address?.trim()) {
-    ElMessage.warning('请输入详细地址')
-    return
-  }
-  if (!form.landlordName?.trim()) {
-    ElMessage.warning('请输入房东姓名')
-    return
-  }
+  if (!form.houseName?.trim()) return ElMessage.warning('请输入房源名称')
+  if (!form.projectName?.trim()) return ElMessage.warning('请输入所属项目')
+  if (!form.address?.trim()) return ElMessage.warning('请输入详细地址')
+  if (!form.landlordName?.trim()) return ElMessage.warning('请输入房东姓名')
 
   if (editingId.value) {
     await updateHouse(editingId.value, form)
@@ -149,7 +123,7 @@ async function remove(row) {
 
 async function quickStatus(row, status) {
   await updateHouseStatus(row.id, status)
-  ElMessage.success('房源状态更新成功')
+  ElMessage.success('房源状态已更新')
   await loadData()
 }
 
@@ -170,23 +144,30 @@ onMounted(() => {
 
 <template>
   <div class="page-shell page-shell--table">
-    <section class="page-toolbar housing-toolbar">
+    <section class="page-toolbar">
       <div class="page-title">
         <div>
           <span class="page-eyebrow">Housing Ledger</span>
           <h2>{{ title }}</h2>
           <div class="page-subtitle">
-            以更贴近主流管理后台的方式组织房源台账，让筛选、状态切换和基础信息维护都更直观。
+            用更清晰的层级组织房源台账，让筛选、状态切换、项目归属和租金信息在一个页面里就能被快速读懂。
           </div>
         </div>
-        <el-button v-if="userStore.hasPermission('house:add')" type="primary" @click="openCreate">
-          新增房源
-        </el-button>
+
+        <div class="toolbar-actions">
+          <div class="toolbar-summary">
+            <span>{{ rentalModeLabel }}模式</span>
+            <strong>{{ page.total || 0 }}</strong>
+          </div>
+          <el-button v-if="userStore.hasPermission('house:add')" type="primary" @click="openCreate">
+            新增房源
+          </el-button>
+        </div>
       </div>
 
       <el-form class="filter-form" inline>
         <el-form-item label="关键词">
-          <el-input v-model="query.keyword" placeholder="请输入房源编号或名称" clearable />
+          <el-input v-model="query.keyword" placeholder="输入房源编号或名称" clearable />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="query.status" placeholder="全部状态" clearable style="width: 180px">
@@ -207,10 +188,24 @@ onMounted(() => {
       </article>
     </section>
 
-    <section ref="tableCardRef" class="table-card house-table-card">
+    <section ref="tableCardRef" class="table-card">
+      <div class="table-card__head">
+        <div>
+          <div class="table-card__title">房源列表</div>
+          <div class="table-card__desc">当前展示 {{ page.total || 0 }} 条符合条件的房源记录。</div>
+        </div>
+      </div>
+
       <el-table v-loading="loading" :data="page.list" :height="tableHeight" stripe>
         <el-table-column prop="houseCode" label="房源编号" width="140" />
-        <el-table-column prop="houseName" label="房源名称" min-width="180" />
+        <el-table-column prop="houseName" label="房源名称" min-width="180">
+          <template #default="{ row }">
+            <div class="house-name-cell">
+              <strong>{{ row.houseName }}</strong>
+              <span>{{ row.projectName }}</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="projectName" label="所属项目" min-width="150" />
         <el-table-column prop="address" label="详细地址" min-width="220" show-overflow-tooltip />
         <el-table-column prop="area" label="面积" width="100">
@@ -220,7 +215,11 @@ onMounted(() => {
           <template #default="{ row }">¥{{ row.rentPrice }}</template>
         </el-table-column>
         <el-table-column prop="landlordName" label="房东" min-width="120" />
-        <el-table-column prop="tenantName" label="租客" min-width="120" />
+        <el-table-column prop="tenantName" label="租客" min-width="120">
+          <template #default="{ row }">
+            <span>{{ row.tenantName || '未入住' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="120">
           <template #default="{ row }">
             <el-tag :type="resolveStatusType(row.status)">{{ houseStatusMap[row.status] || row.status }}</el-tag>
@@ -273,44 +272,68 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.housing-toolbar {
-  padding-bottom: var(--space-2);
-}
-
-.housing-toolbar :deep(.page-title) {
+.toolbar-actions {
+  display: flex;
   align-items: center;
+  gap: var(--space-3);
 }
 
-.housing-toolbar :deep(.page-title h2) {
-  margin-top: 6px;
+.toolbar-summary {
+  min-width: 108px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  text-align: right;
 }
 
-.housing-toolbar :deep(.filter-form) {
-  align-items: flex-end;
+.toolbar-summary span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
-.housing-toolbar :deep(.el-form-item) {
-  margin-bottom: 0;
+.toolbar-summary strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 22px;
+  font-weight: 900;
 }
 
-.housing-toolbar :deep(.el-input),
-.housing-toolbar :deep(.el-select) {
-  width: 180px;
+.table-card__head {
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--border);
 }
 
-.house-table-card {
-  border-top: 1px solid var(--line-color);
+.table-card__title {
+  font-size: 20px;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
-.house-table-card :deep(.el-table) {
-  width: 100%;
+.table-card__desc {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
-.house-table-card :deep(.el-table__header-wrapper th) {
-  background: var(--el-fill-color-light);
+.house-name-cell {
+  display: grid;
+  gap: 2px;
 }
 
-.house-table-card :deep(.el-table__body-wrapper) {
-  overflow-y: auto;
+.house-name-cell strong {
+  font-weight: 900;
+}
+
+.house-name-cell span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .toolbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 </style>

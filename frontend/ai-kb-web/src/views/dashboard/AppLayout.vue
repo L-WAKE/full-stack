@@ -12,11 +12,11 @@ const workspaceStore = useWorkspaceStore();
 const isSidebarCollapsed = ref(false);
 
 const menuItems = [
-  { path: "/dashboard", label: "总览", desc: "业务运营看板" },
-  { path: "/spaces", label: "知识空间", desc: "业务域与权限边界" },
-  { path: "/documents", label: "文档治理", desc: "上传、解析、切片、审计" },
-  { path: "/chat", label: "检索问答", desc: "会话与引用来源" },
-  { path: "/settings", label: "模型策略", desc: "模型与检索配置" },
+  { path: "/dashboard", label: "概览", desc: "运营与健康度总览" },
+  { path: "/spaces", label: "知识空间", desc: "空间与成员权限" },
+  { path: "/documents", label: "文档治理", desc: "上传、解析与切片" },
+  { path: "/chat", label: "检索问答", desc: "对话与引用来源" },
+  { path: "/settings", label: "模型策略", desc: "检索与模型参数" },
 ];
 
 const routeMetaMap = {
@@ -28,22 +28,22 @@ const routeMetaMap = {
   spaces: {
     parent: "Knowledge Ops",
     title: "知识空间与场景设计",
-    subtitle: "按业务域沉淀 SOP、产品 FAQ、客户支持手册、实施交付文档等企业核心知识资产。",
+    subtitle: "按业务域组织 FAQ、SOP、产品资料、交付文档和制度资产，为不同团队建立清晰边界。",
   },
   documents: {
     parent: "Knowledge Ops",
     title: "文档治理中心",
-    subtitle: "统一管理企业文档上传、解析状态、切片质量、可见范围和入库健康度。",
+    subtitle: "统一管理文档上传、解析状态、切片质量、可见范围和入库健康度。",
   },
   chat: {
     parent: "Retrieval QA",
     title: "检索问答与引用追踪",
-    subtitle: "面向运营、售前、客服和交付团队提供可追溯的知识问答能力。",
+    subtitle: "面向客服、售前、交付和内部支持团队提供可追溯的知识问答能力。",
   },
   settings: {
     parent: "AI Strategy",
     title: "模型与检索策略",
-    subtitle: "集中配置聊天模型、Embedding 方案和 RAG 检索参数，为生产化扩展预留能力。",
+    subtitle: "集中配置聊天模型、Embedding 方案和 RAG 参数，为生产化扩展保留能力。",
   },
 };
 
@@ -57,7 +57,7 @@ const currentSpaceRole = computed(() => {
 const activeSpaceSummary = computed(() => {
   const current = workspaceStore.spaces.find((item) => item.id === workspaceStore.activeSpaceId);
   if (!current) return "未选择知识空间";
-  return `${current.name} · ${current.document_count} docs · ${current.member_count} members`;
+  return `${current.name} / ${current.document_count} docs / ${current.member_count} members`;
 });
 
 onMounted(async () => {
@@ -71,10 +71,7 @@ onMounted(async () => {
 
 async function handleSpaceChange() {
   await workspaceStore.loadActiveSpaceDetail();
-  await Promise.all([
-    workspaceStore.loadDocuments(),
-    workspaceStore.loadConversations(),
-  ]);
+  await Promise.all([workspaceStore.loadDocuments(), workspaceStore.loadConversations()]);
 }
 
 function toggleSidebar() {
@@ -113,20 +110,18 @@ function logout() {
 
     <div class="console-body">
       <aside class="layout-sidebar">
-        <div class="sidebar-block">
-          <div class="sidebar-caption">Modules</div>
-          <button
-            v-for="item in menuItems"
-            :key="item.path"
-            class="sidebar-link"
-            :class="{ 'sidebar-link--active': activeMenu === item.path }"
-            type="button"
-            @click="router.push(item.path)"
-          >
-            <span class="sidebar-link__title">{{ item.label }}</span>
-            <span class="sidebar-link__desc">{{ item.desc }}</span>
-          </button>
-        </div>
+        <div class="sidebar-caption">Modules</div>
+        <button
+          v-for="item in menuItems"
+          :key="item.path"
+          class="sidebar-link"
+          :class="{ 'sidebar-link--active': activeMenu === item.path }"
+          type="button"
+          @click="router.push(item.path)"
+        >
+          <span class="sidebar-link__title">{{ item.label }}</span>
+          <span class="sidebar-link__desc">{{ item.desc }}</span>
+        </button>
 
         <button
           class="sidebar-toggle"
@@ -156,12 +151,7 @@ function logout() {
               placeholder="选择知识空间"
               @change="handleSpaceChange"
             >
-              <el-option
-                v-for="space in workspaceStore.spaces"
-                :key="space.id"
-                :label="space.name"
-                :value="space.id"
-              />
+              <el-option v-for="space in workspaceStore.spaces" :key="space.id" :label="space.name" :value="space.id" />
             </el-select>
           </div>
         </header>
@@ -176,29 +166,26 @@ function logout() {
 
 <style scoped>
 .console-shell {
-  --sidebar-width: 236px;
+  --sidebar-width: 248px;
   height: 100vh;
   overflow: hidden;
   color: var(--text-main);
-  background: var(--bg-page);
+  background: var(--white);
 }
 
 .console-shell--collapsed {
-  --sidebar-width: 72px;
+  --sidebar-width: 76px;
 }
 
 .console-header {
-  min-height: 58px;
+  min-height: 72px;
   display: grid;
   grid-template-columns: minmax(320px, 1fr) auto;
   gap: var(--space-4);
   align-items: center;
-  padding: 10px 18px;
-  color: var(--sidebar-text);
-  background:
-    radial-gradient(circle at top left, rgba(95, 166, 255, 0.18), transparent 24%),
-    linear-gradient(120deg, #0f1723, #152233 60%, #112942);
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  padding: 16px 32px;
+  color: var(--text-inverse);
+  background: var(--dark);
 }
 
 .console-header__brand,
@@ -208,31 +195,33 @@ function logout() {
 }
 
 .console-header__brand {
-  gap: 14px;
+  gap: 16px;
   min-width: 0;
 }
 
 .header-logo {
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #fff6d8, #ffd38a);
-  color: #111827;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  background: transparent;
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
 .header-title {
-  color: #f8fbff;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .header-subtitle {
-  margin-top: 2px;
-  color: rgba(226, 232, 240, 0.72);
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.62);
   font-size: 12px;
 }
 
@@ -242,40 +231,49 @@ function logout() {
   gap: 10px;
 }
 
+.header-chip,
+.header-logout {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: transparent;
+  color: var(--white);
+}
+
 .header-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
 }
 
 .header-chip__label {
-  color: rgba(226, 232, 240, 0.65);
+  color: rgba(255, 255, 255, 0.54);
   font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .header-chip__value {
-  color: #fff;
   font-size: 12px;
   font-weight: 700;
 }
 
 .header-logout {
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
   cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.header-logout:hover {
+  border-color: var(--bmw-blue);
+  color: var(--bmw-blue);
 }
 
 .console-body {
-  height: calc(100vh - 58px);
+  height: calc(100vh - 72px);
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   transition: grid-template-columns 0.24s ease;
@@ -284,61 +282,56 @@ function logout() {
 .layout-sidebar {
   position: relative;
   min-width: 0;
-  padding: 14px 10px 60px;
-  background:
-    radial-gradient(circle at top, rgba(61, 139, 255, 0.12), transparent 30%),
-    linear-gradient(180deg, #11161d, #18212c);
-  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.06);
-}
-
-.sidebar-block {
-  display: grid;
-  gap: 8px;
+  padding: 20px 16px 64px;
+  background: var(--dark);
 }
 
 .sidebar-caption {
-  margin-bottom: 4px;
-  padding: 0 8px;
-  color: rgba(226, 232, 240, 0.55);
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.54);
   font-size: 11px;
-  letter-spacing: 0.08em;
+  font-weight: 900;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .sidebar-link {
   width: 100%;
   display: grid;
-  gap: 2px;
+  gap: 4px;
   text-align: left;
-  padding: 10px 12px;
-  border: 1px solid transparent;
-  border-radius: 16px;
-  color: rgba(236, 242, 249, 0.86);
+  margin-bottom: 8px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: transparent;
+  color: var(--sidebar-text);
   cursor: pointer;
-  transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
 }
 
 .sidebar-link:hover {
-  transform: translateX(2px);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--sidebar-hover);
 }
 
 .sidebar-link--active {
-  border-color: rgba(105, 174, 255, 0.28);
-  background: linear-gradient(135deg, rgba(23, 104, 255, 0.3), rgba(61, 139, 255, 0.18));
-  box-shadow: 0 16px 28px rgba(23, 104, 255, 0.18);
+  border-color: var(--bmw-blue);
+  background: var(--bmw-blue);
+  color: var(--white);
 }
 
 .sidebar-link__title {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 900;
+  letter-spacing: 0.03em;
 }
 
 .sidebar-link__desc {
-  color: rgba(226, 232, 240, 0.6);
+  color: var(--sidebar-text-muted);
   font-size: 11px;
   line-height: 1.4;
+}
+
+.sidebar-link--active .sidebar-link__desc {
+  color: rgba(255, 255, 255, 0.76);
 }
 
 .console-shell--collapsed .sidebar-caption,
@@ -347,8 +340,8 @@ function logout() {
 }
 
 .console-shell--collapsed .sidebar-link {
-  padding: 12px 10px;
   place-items: center;
+  padding: 14px 8px;
 }
 
 .sidebar-toggle {
@@ -356,12 +349,11 @@ function logout() {
   left: 50%;
   bottom: 18px;
   transform: translateX(-50%);
-  width: 30px;
-  height: 38px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  color: rgba(236, 242, 249, 0.86);
-  background: rgba(255, 255, 255, 0.06);
+  width: 34px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: var(--white);
   cursor: pointer;
 }
 
@@ -374,17 +366,18 @@ function logout() {
 }
 
 .page-header {
-  padding: 14px 16px 10px;
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid var(--border);
 }
 
 .page-header__breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--primary);
+  color: var(--meta);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-weight: 900;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -396,29 +389,30 @@ function logout() {
 }
 
 .page-header h1 {
-  margin: 8px 0 6px;
-  font-size: 22px;
-  line-height: 1.04;
-  letter-spacing: -0.05em;
+  margin: 10px 0 6px;
+  font-size: 36px;
+  font-weight: 300;
+  line-height: 1.1;
+  text-transform: uppercase;
 }
 
 .page-header p {
   max-width: 760px;
   margin: 0;
   color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .space-switcher {
-  width: 248px;
-  margin-top: 4px;
+  width: 260px;
+  margin-top: 6px;
 }
 
 .layout-content {
   flex: 1;
   min-height: 0;
-  padding: 0 16px 16px;
+  padding: 16px 24px 24px;
   overflow: auto;
 }
 
@@ -442,7 +436,7 @@ function logout() {
   }
 
   .page-header {
-    padding: 14px 12px 10px;
+    padding: 16px;
   }
 
   .page-header__row {
@@ -450,7 +444,7 @@ function logout() {
   }
 
   .page-header h1 {
-    font-size: 20px;
+    font-size: 28px;
   }
 
   .space-switcher {
@@ -458,7 +452,7 @@ function logout() {
   }
 
   .layout-content {
-    padding: 0 12px 12px;
+    padding: 12px 16px 16px;
   }
 }
 </style>

@@ -51,7 +51,7 @@ function validateUploadFile(uploadFile) {
   const fileName = rawFile?.name || uploadFile?.name || "";
   const extension = fileName.split(".").pop()?.toLowerCase();
   if (!["pdf", "docx"].includes(extension)) {
-    ElMessage.warning("当前仅支持 PDF / DOCX。DOC、XLSX、XLS 请先另存为 PDF 或 DOCX 后上传。");
+    ElMessage.warning("当前仅支持 PDF / DOCX，请先转换后再上传。");
     uploadRef.value?.clearFiles();
     return null;
   }
@@ -81,10 +81,10 @@ async function handleUpload(uploadFile) {
       startPolling(latestDocument.id);
       ElMessage.success("文档已上传并自动触发解析，系统正在后台处理。");
     } else {
-      ElMessage.success("文档已上传，当前状态为 PENDING。");
+      ElMessage.success("文档已上传，当前状态为 pending。");
     }
   } catch (error) {
-    ElMessage.error(error?.response?.data?.detail || "上传失败，请确认文件格式、空间权限和后端服务状态。");
+    ElMessage.error(error?.response?.data?.detail || "上传失败，请检查文件格式和服务状态。");
   } finally {
     uploading.value = false;
     uploadRef.value?.clearFiles();
@@ -97,7 +97,7 @@ async function parseDocument(documentId) {
     await workspaceStore.parseDocument(documentId);
     await workspaceStore.loadDocuments();
     startPolling(documentId);
-    ElMessage.success("解析任务已提交，系统正在后台处理");
+    ElMessage.success("解析任务已提交，系统正在后台处理。");
   } catch (error) {
     parsingId.value = null;
     ElMessage.error(error?.response?.data?.detail || "解析失败");
@@ -192,7 +192,7 @@ onBeforeUnmount(() => {
           type="info"
           :closable="false"
           :title="`当前空间角色：${currentSpaceRole}`"
-          description="上传文档后可触发解析，owner、文档上传人和系统 admin 可管理文档可见范围与删除操作。"
+          description="owner、文档上传人和系统 admin 可以管理文档可见范围与删除操作。"
         />
 
         <el-form label-position="top" class="panel-form">
@@ -220,7 +220,7 @@ onBeforeUnmount(() => {
         >
           <div class="upload-copy">
             <strong>将文档拖到这里，或点击选择上传</strong>
-            <span>支持 PDF / DOCX，适合产品手册、业务 SOP、交付说明、FAQ 和制度文档。</span>
+            <span>支持 PDF / DOCX，适合产品手册、业务 SOP、FAQ 和制度文档。</span>
           </div>
         </el-upload>
         <div class="upload-warning">仅支持 PDF / DOCX</div>
@@ -297,7 +297,7 @@ onBeforeUnmount(() => {
           <span class="page-eyebrow">Chunk Preview</span>
           <h2>切片预览 {{ currentDocumentId ? `#${currentDocumentId}` : "" }}</h2>
           <p class="page-subtitle">
-            解析完成后在这里快速检查分段结构、页码和摘要内容，判断切片是否适合进入企业知识检索链路。
+            解析完成后在这里快速检查分段结构、页码和摘要内容，判断切片是否适合进入检索链路。
           </p>
         </div>
       </div>
@@ -305,9 +305,7 @@ onBeforeUnmount(() => {
       <el-empty v-if="workspaceStore.chunks.length === 0" description="选择文档后查看切片结果" />
       <div v-else class="chunk-list">
         <article v-for="chunk in workspaceStore.chunks" :key="chunk.id" class="chunk-item">
-          <div class="chunk-head">
-            {{ chunk.section_path || "未命名分段" }} / page {{ chunk.page_no || "-" }}
-          </div>
+          <div class="chunk-head">{{ chunk.section_path || "未命名分段" }} / page {{ chunk.page_no || "-" }}</div>
           <div class="chunk-meta">token estimate {{ chunk.token_estimate }}</div>
           <div class="chunk-body">{{ chunk.content_preview }}</div>
         </article>
@@ -319,7 +317,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .document-grid {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-columns: 320px minmax(0, 1fr);
   gap: var(--space-4);
 }
 
@@ -333,19 +331,22 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: var(--space-3);
   align-items: flex-start;
-  padding: 14px 16px 10px;
+  padding: 18px 20px 10px;
+  border-bottom: 1px solid var(--border);
 }
 
 .table-header h3 {
   margin: 0;
   font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .table-header p {
   margin: 6px 0 0;
   color: var(--text-muted);
   font-size: 13px;
-  line-height: 1.6;
 }
 
 .visibility-filter {
@@ -355,6 +356,11 @@ onBeforeUnmount(() => {
 .upload-copy strong,
 .upload-copy span {
   display: block;
+}
+
+.upload-copy strong {
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .upload-copy span {
@@ -367,7 +373,9 @@ onBeforeUnmount(() => {
   margin-top: 8px;
   color: var(--danger);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .action-group {
@@ -382,14 +390,13 @@ onBeforeUnmount(() => {
 }
 
 .chunk-item {
-  padding: 12px;
-  border: 1px solid var(--line-color);
-  border-radius: var(--radius-md);
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.94));
+  padding: 14px;
+  border: 1px solid var(--border);
+  background: var(--white);
 }
 
 .chunk-head {
-  font-weight: 700;
+  font-weight: 900;
 }
 
 .chunk-meta {

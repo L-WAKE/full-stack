@@ -13,9 +13,9 @@ const citations = ref([]);
 const retrieving = ref(false);
 
 const sampleQuestions = [
-  "客户咨询操作流程时，应该优先参考哪份 SOP？",
+  "客户咨询处理流程时，应该优先参考哪份 SOP？",
   "当前文档里有没有关于权限或审批边界的说明？",
-  "帮我找一下实施交付前需要检查哪些事项。",
+  "实施交付前需要检查哪些事项？",
 ];
 
 const retrievalSummary = computed(() => {
@@ -104,7 +104,7 @@ async function submit() {
           <span class="page-eyebrow">Retrieval QA</span>
           <h2>可追溯的企业知识问答</h2>
           <p class="page-subtitle">
-            问答过程会先检索当前知识空间的文档切片，再展示引用来源，适合企业内部客服、售前、交付和制度查询场景。
+            先检索知识空间中的文档切片，再展示引用来源与流式答案，适合客服、售前、交付和制度查询场景。
           </p>
         </div>
       </div>
@@ -115,7 +115,7 @@ async function submit() {
         <div class="table-header table-header--tight">
           <div>
             <h3>会话列表</h3>
-            <p>按知识空间管理业务问答记录。</p>
+            <p>按知识空间组织业务问答记录。</p>
           </div>
           <el-button type="primary" plain @click="createNewConversation">新建会话</el-button>
         </div>
@@ -139,13 +139,13 @@ async function submit() {
         <div class="table-header table-header--tight">
           <div>
             <h3>问答工作区</h3>
-            <p>先召回上下文，再以流式方式展示回答和引用。</p>
+            <p>先召回上下文，再以流式方式输出答案和引用。</p>
           </div>
         </div>
 
         <el-alert v-if="retrievalSummary" type="info" :closable="false" show-icon>
           <template #title>
-            已命中 {{ retrievalSummary.count }} 条片段，当前检索模式：{{ retrievalSummary.mode }}
+            已命中 {{ retrievalSummary.count }} 条片段 / 当前检索模式 {{ retrievalSummary.mode }}
           </template>
         </el-alert>
 
@@ -201,11 +201,15 @@ async function submit() {
         </div>
 
         <div v-if="citations.length === 0" class="placeholder-copy">
-          发起一次问答后，这里会展示回答引用的文档来源，帮助业务人员判断答案是否可信。
+          发起一次问答后，这里会展示答案引用的文档来源，帮助业务人员判断答复是否可信。
         </div>
 
         <div v-else class="citation-list">
-          <article v-for="item in citations" :key="`${item.document_name}-${item.page_no}-${item.section_path}`" class="citation-item">
+          <article
+            v-for="item in citations"
+            :key="`${item.document_name}-${item.page_no}-${item.section_path}`"
+            class="citation-item"
+          >
             <div class="citation-title">{{ item.document_name }}</div>
             <div class="citation-meta">
               <span>上传人：{{ uploaderLabel(item) }}</span>
@@ -224,7 +228,7 @@ async function submit() {
 <style scoped>
 .chat-grid {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) 360px;
+  grid-template-columns: 300px minmax(0, 1fr) 360px;
   gap: var(--space-4);
 }
 
@@ -243,12 +247,15 @@ async function submit() {
 
 .table-header--tight {
   padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--line-color);
+  border-bottom: 1px solid var(--border);
 }
 
 .table-header h3 {
   margin: 0;
   font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .table-header p {
@@ -270,36 +277,41 @@ async function submit() {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.sample-list button {
-  padding: 8px 10px;
-  border: 1px solid var(--line-color);
-  border-radius: var(--radius-sm);
-  background: rgba(248, 250, 252, 0.9);
-  color: var(--text-secondary);
-  text-align: left;
-  cursor: pointer;
-}
-
+.sample-list button,
 .conversation-item,
 .citation-item,
 .message-item {
   width: 100%;
   text-align: left;
-  padding: 10px 12px;
-  border: 1px solid var(--line-color);
-  border-radius: var(--radius-md);
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.94));
+  padding: 12px;
+  border: 1px solid var(--border);
+  background: var(--white);
   color: var(--text-main);
 }
 
-.conversation-item--active {
-  border-color: rgba(23, 104, 255, 0.4);
-  background: rgba(237, 244, 255, 0.96);
+.sample-list button {
+  cursor: pointer;
+}
+
+.sample-list button:hover,
+.conversation-item:hover {
+  border-color: var(--bmw-blue);
+}
+
+.conversation-item--active,
+.message-item--assistant {
+  border-color: var(--bmw-blue);
+  background: rgba(28, 105, 212, 0.04);
 }
 
 .conversation-item strong,
 .conversation-item span {
   display: block;
+}
+
+.conversation-item strong,
+.citation-title {
+  font-weight: 900;
 }
 
 .conversation-item span {
@@ -315,11 +327,9 @@ async function submit() {
 .message-item strong {
   display: inline-block;
   margin-bottom: 8px;
-  color: var(--primary);
-}
-
-.message-item--assistant {
-  background: rgba(237, 244, 255, 0.96);
+  color: var(--bmw-blue);
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .composer {
@@ -328,15 +338,10 @@ async function submit() {
   margin-top: var(--space-4);
 }
 
-.citation-title {
-  margin-bottom: 8px;
-  font-weight: 700;
-}
-
 .citation-meta {
   display: grid;
   gap: 4px;
-  margin-bottom: 10px;
+  margin: 8px 0 10px;
   color: var(--text-muted);
   font-size: 12px;
 }
@@ -350,12 +355,6 @@ async function submit() {
 @media (max-width: 1280px) {
   .chat-grid {
     grid-template-columns: 1fr;
-  }
-
-  .conversation-panel,
-  .chat-panel,
-  .citation-panel {
-    min-height: auto;
   }
 }
 
