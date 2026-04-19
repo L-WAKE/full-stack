@@ -64,7 +64,7 @@ tools/*.zip
 tools/mysql-house.ini
 tools/mysql-manual-start.log
 
-# Temporary files
+# Temporary files 临时文件
 temp-*.docx
 resume-ai-fullstack.pdf
 resume-front.pdf
