@@ -1,2 +1,0 @@
-﻿import{p as a}from"./main-CldlCR_2.js";async function g(n){const t=a();return t?(await c(t,[n]))[n]??0:null}async function f(n){const t=a();return t?c(t,n):{}}async function c(n,t){const o=Array.from(new Set(t.map(r=>r.trim()).filter(Boolean)));if(o.length===0)return{};const{data:i,error:s}=await n.rpc("get_design_star_counts",{target_design_slugs:o});if(s)throw s;const e=Object.fromEntries(o.map(r=>[r,0]));for(const r of i??[])e[r.design_slug]=Number(r.star_count??0);return e}export{g as a,f as g};
-
