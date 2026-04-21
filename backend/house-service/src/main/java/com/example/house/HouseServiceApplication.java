@@ -1,5 +1,5 @@
 package com.example.house;
-
+// 入口
 import com.example.house.common.config.LocalEnvironmentBootstrap;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
