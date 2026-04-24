@@ -1,0 +1,65 @@
+# VS Code 扩展插件清单
+
+- GitHub Copilot Chat
+- 别名路径跳转
+- 微信小程序开发工具
+- 小程序开发助手
+- Angular Snippets (Version 18)
+- Auto Rename Tag
+- C/C++
+- Chinese (Simplified) (简体中文) Language Pack for Visual Studio Code
+- Container Tools
+- Debugger for Java
+- DotENV
+- Easy LESS
+- easy-i18n-helper
+- EditorConfig
+- ESLint Chinese Rules
+- Extension Pack for Java
+- Git Graph
+- Git History
+- GitLens — Git supercharged
+- Gradle for Java
+- Headwind
+- HTML Boilerplate
+- HTML CSS Support
+- i18n Ally
+- Iconify IntelliSense
+- Language Support for Java(TM) by Red Hat
+- Less IntelliSense
+- Lingma - Alibaba Cloud AI Coding Assistant
+- Live Server
+- Local History
+- Markdown All in One
+- Maven for Java
+- node-snippets
+- Path Intellisense
+- PowerShell
+- Prettier - Code formatter
+- Prettier ESLint
+- Project Manager for Java
+- Pylance
+- Python
+- Python Debugger
+- Python Environments
+- React Native Tools
+- Sass (.sass only)
+- Sass/Less/Stylus/Pug/Jade/Typescript/Javascript Compile Hero Pro
+- Stylelint
+- stylus
+- SVN
+- Tailwind CSS IntelliSense
+- Tailwind Docs
+- Test Runner for Java
+- TSC Dev
+- TypeScript Debugger
+- uniapp devtools
+- Uniapp Enhanced
+- uniapp-snippet
+- Vetur
+- VS Code Counter
+- vscode-pdf
+- Vue (Official)
+- Vue 3 Support - All In One
+- WakaTime
+- WXML - Language Service
